@@ -2,104 +2,245 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Let’s Bee One AI – v5</title>
+  <title>BeeOneAI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #fffbe6;
-      padding: 1rem;
       margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
-    h1 { text-align: center; }
+
     #chat-box {
-      border: 1px solid #ccc;
+      flex: 1;
+      overflow-y: auto;
       padding: 1rem;
       background: #fff;
-      height: 60vh;
-      overflow-y: auto;
-      margin-top: 1rem;
-      border-radius: 8px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
+      border-bottom: 1px solid #ccc;
     }
-    .msg { margin: 0.5rem 0; padding: 0.5rem; border-radius: 6px; }
-    .user { background: #fdd835; text-align: right; }
-    .ai { background: #e0e0e0; text-align: left; }
-    #chat-input, #tone, #memory {
-      width: 100%;
-      max-width: 600px;
-      margin: 0.5rem auto;
+
+    .msg {
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      border-radius: 6px;
+      max-width: 80%;
+    }
+
+    .user {
+      background: #fdd835;
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    .ai {
+      background: #e0e0e0;
+      align-self: flex-start;
+      text-align: left;
+    }
+
+    .label {
+      font-weight: bold;
+      font-size: 0.85rem;
       display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    #input-area {
+      display: flex;
+      padding: 0.75rem;
+      background: #f9f9f9;
+      border-top: 1px solid #ccc;
+    }
+
+    #chat-input {
+      flex: 1;
       padding: 0.5rem;
       font-size: 1rem;
       border-radius: 6px;
-      box-sizing: border-box;
+      border: 1px solid #ccc;
     }
+
+    #send-btn, #test-btn {
+      margin-left: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      background-color: #fdd835;
+      border: none;
+      cursor: pointer;
+    }
+
+    .avatar-panel {
+      position: fixed;
+      bottom: 1rem;
+      width: 120px;
+      height: 160px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      padding: 0.5rem;
+      text-align: center;
+      backdrop-filter: blur(6px);
+    }
+
+    .avatar-panel img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .avatar-name {
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-top: 0.3rem;
+    }
+
+    #avatar-einstein { right: 150px; }
+    #avatar-newton { right: 10px; }
   </style>
 </head>
 <body>
-  <h1>🐝 Let’s Bee One AI</h1>
-  <input type="text" id="chat-input" placeholder="Type your message and press Enter">
-  <select id="tone">
-    <option value="gentle">💛 Gentle</option>
-    <option value="nerdy">🧠 Nerdy</option>
-    <option value="flirty">🔥 Flirty</option>
-  </select>
-  <textarea id="memory" placeholder="Journal memory (saved locally)..." rows="3"></textarea>
   <div id="chat-box"></div>
 
-<script>
-  const chatInput = document.getElementById("chat-input");
-  const chatBox = document.getElementById("chat-box");
-  const memoryBox = document.getElementById("memory");
+  <div id="input-area">
+    <input type="text" id="chat-input" placeholder="Type a message...">
+    <button id="send-btn">Send</button>
+    <button id="test-btn">Test Bench</button>
+  </div>
 
-  memoryBox.value = localStorage.getItem("journal") || "";
-  memoryBox.addEventListener("input", () => {
-    localStorage.setItem("journal", memoryBox.value);
-  });
+  <div id="avatar-einstein" class="avatar-panel" style="right: 150px;">
+    <img id="avatar-img-einstein" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Albert_Einstein_Head.jpg/200px-Albert_Einstein_Head.jpg" alt="Einstein Avatar" />
+    <div class="avatar-name">Einstein</div>
+  </div>
 
-  chatInput.addEventListener("keypress", function(e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      sendMessage();
+  <div id="avatar-newton" class="avatar-panel" style="right: 10px;">
+    <img id="avatar-img-newton" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Sir_Isaac_Newton_%281643-1727%29.jpg/200px-Sir_Isaac_Newton_%281643-1727%29.jpg" alt="Newton Avatar" />
+    <div class="avatar-name">Newton</div>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chat-box");
+    const chatInput = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("send-btn");
+    const testBtn = document.getElementById("test-btn");
+    const avatarImgEinstein = document.getElementById("avatar-img-einstein");
+    const avatarImgNewton = document.getElementById("avatar-img-newton");
+
+    const userMemory = JSON.parse(localStorage.getItem("beeUserMemory")) || {
+      name: "Friend",
+      likes: ["space", "music"],
+      energy: "medium",
+      comfortPhrases: ["I'm here for you.", "You're doing better than you think."],
+      tone: "supportive"
+    };
+
+    function saveMemory() {
+      localStorage.setItem("beeUserMemory", JSON.stringify(userMemory));
     }
-  });
 
-  function sendMessage() {
-    const message = chatInput.value.trim();
-    const tone = document.getElementById("tone").value;
-    const memory = memoryBox.value.trim();
-    if (!message) return;
-
-    const userMsg = document.createElement("div");
-    userMsg.className = "msg user";
-    userMsg.textContent = message;
-    chatBox.appendChild(userMsg);
-    chatInput.value = "";
-
-    fetch("/.netlify/functions/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, tone, memory })
-    })
-    .then(res => res.json())
-    .then(data => {
-      const reply = data.reply || "🤖 Hmm... something went wrong.";
-      const aiMsg = document.createElement("div");
-      aiMsg.className = "msg ai";
-      aiMsg.textContent = reply;
-      chatBox.appendChild(aiMsg);
+    function appendMessage(sender, text) {
+      const div = document.createElement("div");
+      div.className = `msg ${sender}`;
+      const label = document.createElement("span");
+      label.className = "label";
+      label.textContent = sender === "user" ? "You" : "Bee";
+      div.appendChild(label);
+      div.appendChild(document.createTextNode(text));
+      chatBox.appendChild(div);
       chatBox.scrollTop = chatBox.scrollHeight;
-    })
-    .catch(() => {
-      const err = document.createElement("div");
-      err.className = "msg ai";
-      err.textContent = "❌ Could not connect to the AI.";
-      chatBox.appendChild(err);
+
+      if (sender === "ai") speak(text);
+    }
+
+    function personalizedResponse(message) {
+      let prefix = "";
+      if (message.toLowerCase().includes("sad") || message.toLowerCase().includes("tired")) {
+        prefix = userMemory.comfortPhrases[Math.floor(Math.random() * userMemory.comfortPhrases.length)] + " ";
+      } else if (message.toLowerCase().includes("space") && userMemory.likes.includes("space")) {
+        prefix = "Ah, space — our favorite topic! ";
+      }
+      return prefix + `You said: ${message}`;
+    }
+
+    function sendMessage(text = null) {
+      const message = text || chatInput.value.trim();
+      if (!message) return;
+      appendMessage("user", message);
+      chatInput.value = "";
+      setTimeout(() => {
+        const response = personalizedResponse(message);
+        appendMessage("ai", response);
+      }, 1500);
+    }
+
+    sendBtn.addEventListener("click", () => sendMessage());
+    chatInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
     });
-  }
-</script>
+
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.onstart = () => {
+        let intensity = 0;
+        const pulseInterval = setInterval(() => {
+          intensity = (Math.random() * 0.1 + 1).toFixed(2);
+          avatarImgEinstein.style.transform = `scale(${intensity})`;
+          avatarImgEinstein.style.filter = `brightness(${intensity})`;
+          avatarImgNewton.style.transform = `scale(${intensity})`;
+          avatarImgNewton.style.filter = `brightness(${intensity})`;
+        }, 100);
+        utterance.onend = () => {
+          clearInterval(pulseInterval);
+          avatarImgEinstein.style.transform = "scale(1)";
+          avatarImgEinstein.style.filter = "brightness(1)";
+          avatarImgNewton.style.transform = "scale(1)";
+          avatarImgNewton.style.filter = "brightness(1)";
+        };
+      };
+      window.speechSynthesis.speak(utterance);
+    }
+
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = function(event) {
+      const voiceInput = event.results[0][0].transcript;
+      chatInput.value = voiceInput;
+      sendMessage();
+    };
+
+    recognition.onerror = function(event) {
+      console.error("Voice input error:", event.error);
+    };
+
+    chatInput.addEventListener("dblclick", () => {
+      recognition.start();
+    });
+
+    const testMessages = [
+      "Hi Bee!",
+      "I feel a bit tired today.",
+      "What do you think about space?",
+      "Tell me something funny.",
+      "Thanks, Bee. You're great!"
+    ];
+
+    testBtn.addEventListener("click", () => {
+      let delay = 0;
+      testMessages.forEach((msg, index) => {
+        setTimeout(() => sendMessage(msg), delay);
+        delay += 4000;
+      });
+    });
+  </script>
 </body>
 </html>
