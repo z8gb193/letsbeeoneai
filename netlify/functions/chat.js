@@ -45,11 +45,11 @@ exports.handler = async function(event) {
       body: JSON.stringify({ reply })
     };
 
-  } catch (err) {
-    console.error("GPT Error:", err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ reply: "🤖 I tried, but something broke. Please try again." })
-    };
-  }
+} catch (err) {
+  console.error("OPENAI ERROR:", err);
+  return {
+    statusCode: 500,
+    body: JSON.stringify({ reply: "🤖 Something went wrong. GPT says: " + err.message })
+  };
+}
 };
