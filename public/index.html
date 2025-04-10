@@ -1,5 +1,105 @@
 <!DOCTYPE html>
-<html>
-  <head><title>Let’s Bee One AI</title></head>
-  <body><h1>🐝 Your Bee Companion is Live</h1></body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Let’s Bee One AI – v5</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fffbe6;
+      padding: 1rem;
+      margin: 0;
+    }
+    h1 { text-align: center; }
+    #chat-box {
+      border: 1px solid #ccc;
+      padding: 1rem;
+      background: #fff;
+      height: 60vh;
+      overflow-y: auto;
+      margin-top: 1rem;
+      border-radius: 8px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .msg { margin: 0.5rem 0; padding: 0.5rem; border-radius: 6px; }
+    .user { background: #fdd835; text-align: right; }
+    .ai { background: #e0e0e0; text-align: left; }
+    #chat-input, #tone, #memory {
+      width: 100%;
+      max-width: 600px;
+      margin: 0.5rem auto;
+      display: block;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐝 Let’s Bee One AI</h1>
+  <input type="text" id="chat-input" placeholder="Type your message and press Enter">
+  <select id="tone">
+    <option value="gentle">💛 Gentle</option>
+    <option value="nerdy">🧠 Nerdy</option>
+    <option value="flirty">🔥 Flirty</option>
+  </select>
+  <textarea id="memory" placeholder="Journal memory (saved locally)..." rows="3"></textarea>
+  <div id="chat-box"></div>
+
+<script>
+  const chatInput = document.getElementById("chat-input");
+  const chatBox = document.getElementById("chat-box");
+  const memoryBox = document.getElementById("memory");
+
+  memoryBox.value = localStorage.getItem("journal") || "";
+  memoryBox.addEventListener("input", () => {
+    localStorage.setItem("journal", memoryBox.value);
+  });
+
+  chatInput.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  function sendMessage() {
+    const message = chatInput.value.trim();
+    const tone = document.getElementById("tone").value;
+    const memory = memoryBox.value.trim();
+    if (!message) return;
+
+    const userMsg = document.createElement("div");
+    userMsg.className = "msg user";
+    userMsg.textContent = message;
+    chatBox.appendChild(userMsg);
+    chatInput.value = "";
+
+    fetch("/.netlify/functions/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, tone, memory })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const reply = data.reply || "🤖 Hmm... something went wrong.";
+      const aiMsg = document.createElement("div");
+      aiMsg.className = "msg ai";
+      aiMsg.textContent = reply;
+      chatBox.appendChild(aiMsg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    })
+    .catch(() => {
+      const err = document.createElement("div");
+      err.className = "msg ai";
+      err.textContent = "❌ Could not connect to the AI.";
+      chatBox.appendChild(err);
+    });
+  }
+</script>
+</body>
 </html>
