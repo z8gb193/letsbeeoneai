@@ -3,7 +3,7 @@ const fetch = require("node-fetch");
 exports.handler = async function(event) {
   const { message, tone, memory } = JSON.parse(event.body || "{}");
 
-  const OPENAI_API_KEY = "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"; // 👈 Insert your real key here
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY; 👈 Insert your real key here
 
   const tonePrompts = {
     gentle: "You are a kind, emotionally supportive companion. Your responses are warm and calming.",
