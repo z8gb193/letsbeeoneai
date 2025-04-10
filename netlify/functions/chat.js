@@ -1,14 +1,16 @@
 const fetch = require("node-fetch");
 
 exports.handler = async function(event) {
-  const { message, tone, memory } = JSON.parse(event.body || "{}");
+  const { message, tone, memory, language } = JSON.parse(event.body || "{}");
 
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY; 👈 Insert your real key here
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
   const tonePrompts = {
-    gentle: "You are a kind, emotionally supportive companion. Your responses are warm and calming.",
-    nerdy: "You are a witty, fact-loving AI who explains things with enthusiasm and clarity.",
-    flirty: "You are a charming, playful AI that responds with humor, affection, and gentle flirtation."
+    gentle: "You are a kind, emotionally supportive companion. Keep your responses warm and calming.",
+    nerdy: "You are a witty, fact-loving AI. Keep your responses full of fun facts and nerdy enthusiasm.",
+    flirty: "You are a charming, playful AI who teases and flatters the user in a fun, flirty tone.",
+    dippy: "You're a silly, spaced-out companion who doesn't really get things and says goofy stuff like 'that's crud' and 'ever noticed clouds... funny aren't they?'",
+    genius: "You are a genius-level, smug Sherlock Holmes-style AI. Speak in short, sharp, eloquent deductions. Be confidently superior."
   };
 
   try {
@@ -21,7 +23,10 @@ exports.handler = async function(event) {
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
         messages: [
-          { role: "system", content: tonePrompts[tone] || tonePrompts.gentle },
+          {
+            role: "system",
+            content: `Please respond in ${language || "English"}. ${tonePrompts[tone] || tonePrompts.gentle}`
+          },
           { role: "user", content: memory ? `Note: ${memory}` : "" },
           { role: "user", content: message }
         ]
@@ -29,9 +34,22 @@ exports.handler = async function(event) {
     });
 
     const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || "No response.";
-    return { statusCode: 200, body: JSON.stringify({ reply }) };
+
+    if (!data.choices || !data.choices[0]) {
+      throw new Error("No valid GPT reply returned.");
+    }
+
+    const reply = data.choices[0].message.content;
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ reply })
+    };
+
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: "Failed to reach OpenAI." }) };
+    console.error("GPT Error:", err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ reply: "🤖 I tried, but something broke. Please try again." })
+    };
   }
 };
