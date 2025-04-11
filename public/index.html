@@ -54,10 +54,41 @@ const extractKeywords = (text) => {
 };
 
 const ChatMessage = ({ message }) => {
-  if (message.type === 'text') return <div className="p-2 animate-fade-in">{message.content}</div>;
-  if (message.type === 'image') return <img src={message.content} alt="Shared" className="max-w-sm rounded-xl m-2 animate-pop-in" />;
+  if (message.type === 'text') {
+    return <div className="p-2 animate-fade-in">{message.content}</div>;
+  }
+
+  if (message.type === 'image') {
+    return (
+      <img
+        src={message.content}
+        alt="Shared"
+        className="max-w-sm rounded-xl m-2 animate-pop-in"
+      />
+    );
+  }
+
   if (message.type === 'youtube') {
-    const videoId = message.content.split('v=')[1]?.split('&')[0] || message.content.split('/').pop();
+    const extractVideoId = (url) => {
+      try {
+        const parsed = new URL(url);
+        if (parsed.hostname.includes('youtu.be')) {
+          return parsed.pathname.slice(1);
+        } else if (parsed.hostname.includes('youtube.com')) {
+          return parsed.searchParams.get('v');
+        }
+        return null;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const videoId = extractVideoId(message.content);
+
+    if (!videoId) {
+      return <div className="p-2 text-red-500">⚠️ Could not load video: invalid link.</div>;
+    }
+
     return (
       <iframe
         className="m-2 rounded-xl animate-fade-in"
@@ -65,11 +96,13 @@ const ChatMessage = ({ message }) => {
         height="225"
         src={`https://www.youtube.com/embed/${videoId}`}
         frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
         title="YouTube video"
       />
     );
   }
+
   return null;
 };
 
