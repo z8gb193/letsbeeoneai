@@ -3,243 +3,114 @@
 <head>
   <meta charset="UTF-8" />
   <title>BeeOneAI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #fffbe6;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
+    body { margin: 0; font-family: Arial, sans-serif; background: #f9f9fb; }
+    h1 { text-align: center; color: #555; }
     #chat-box {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem;
+      max-width: 600px;
+      margin: 2rem auto;
+      border: 1px solid #ccc;
+      border-radius: 10px;
       background: #fff;
-      border-bottom: 1px solid #ccc;
+      padding: 1rem;
+      height: 60vh;
+      overflow-y: auto;
     }
-
-    .msg {
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      border-radius: 6px;
-      max-width: 80%;
-    }
-
-    .user {
-      background: #fdd835;
-      align-self: flex-end;
-      text-align: right;
-    }
-
-    .ai {
-      background: #e0e0e0;
-      align-self: flex-start;
-      text-align: left;
-    }
-
-    .label {
-      font-weight: bold;
-      font-size: 0.85rem;
-      display: block;
-      margin-bottom: 0.2rem;
-    }
-
-    #input-area {
-      display: flex;
-      padding: 0.75rem;
-      background: #f9f9f9;
-      border-top: 1px solid #ccc;
-    }
-
     #chat-input {
-      flex: 1;
+      display: block;
+      margin: 0 auto;
+      width: 600px;
       padding: 0.5rem;
       font-size: 1rem;
-      border-radius: 6px;
+      border-radius: 5px;
       border: 1px solid #ccc;
     }
-
-    #send-btn, #test-btn {
-      margin-left: 0.5rem;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      border-radius: 6px;
-      background-color: #fdd835;
-      border: none;
-      cursor: pointer;
-    }
-
-    .avatar-panel {
-      position: fixed;
-      bottom: 1rem;
-      width: 120px;
-      height: 160px;
-      background-color: rgba(255, 255, 255, 0.1);
-      border: 1px solid #ccc;
-      border-radius: 12px;
-      padding: 0.5rem;
+    #controls {
       text-align: center;
-      backdrop-filter: blur(6px);
+      margin-top: 0.5rem;
     }
-
-    .avatar-panel img {
-      width: 100%;
-      height: auto;
-      border-radius: 8px;
-      transition: transform 0.2s ease, filter 0.2s ease;
+    .avatar-bar {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 10px;
     }
-
+    .avatar {
+      width: 80px;
+      height: 80px;
+      background: #ddd;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
     .avatar-name {
-      font-size: 0.9rem;
-      font-weight: bold;
-      margin-top: 0.3rem;
+      position: absolute;
+      bottom: 2px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 0.75rem;
+      background: rgba(0, 0, 0, 0.4);
+      color: white;
     }
-
-    #avatar-einstein { right: 150px; }
-    #avatar-newton { right: 10px; }
   </style>
 </head>
 <body>
+  <h1>🐝 BeeOneAI Smart Preview</h1>
+  
+  <div class="avatar-bar">
+    <div class="avatar" id="pip"><div class="avatar-name">Pip</div></div>
+    <div class="avatar" id="ai1"><div class="avatar-name">Nova</div></div>
+    <div class="avatar" id="ai2"><div class="avatar-name">Einstein</div></div>
+    <div class="avatar" id="ai3"><div class="avatar-name">SmittenGirl</div></div>
+  </div>
+
   <div id="chat-box"></div>
-
-  <div id="input-area">
-    <input type="text" id="chat-input" placeholder="Type a message...">
-    <button id="send-btn">Send</button>
-    <button id="test-btn">Test Bench</button>
+  <input type="text" id="chat-input" placeholder="Type here and press Enter..."/>
+  
+  <div id="controls">
+    <label><input type="checkbox" id="voice-toggle"/> Voice On</label>
   </div>
 
-  <div id="avatar-einstein" class="avatar-panel" style="right: 150px;">
-    <img id="avatar-img-einstein" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Albert_Einstein_Head.jpg/200px-Albert_Einstein_Head.jpg" alt="Einstein Avatar" />
-    <div class="avatar-name">Einstein</div>
-  </div>
-
-  <div id="avatar-newton" class="avatar-panel" style="right: 10px;">
-    <img id="avatar-img-newton" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Sir_Isaac_Newton_%281643-1727%29.jpg/200px-Sir_Isaac_Newton_%281643-1727%29.jpg" alt="Newton Avatar" />
-    <div class="avatar-name">Newton</div>
-  </div>
+  <audio id="keyboard-sound" src="https://assets.mixkit.co/active_storage/sfx/2583/2583-preview.mp3" preload="auto"></audio>
+  <audio id="enter-sound" src="https://assets.mixkit.co/active_storage/sfx/2585/2585-preview.mp3" preload="auto"></audio>
 
   <script>
-    const chatBox = document.getElementById("chat-box");
-    const chatInput = document.getElementById("chat-input");
-    const sendBtn = document.getElementById("send-btn");
-    const testBtn = document.getElementById("test-btn");
-    const avatarImgEinstein = document.getElementById("avatar-img-einstein");
-    const avatarImgNewton = document.getElementById("avatar-img-newton");
-
-    const userMemory = JSON.parse(localStorage.getItem("beeUserMemory")) || {
-      name: "Friend",
-      likes: ["space", "music"],
-      energy: "medium",
-      comfortPhrases: ["I'm here for you.", "You're doing better than you think."],
-      tone: "supportive"
-    };
-
-    function saveMemory() {
-      localStorage.setItem("beeUserMemory", JSON.stringify(userMemory));
-    }
-
-    function appendMessage(sender, text) {
-      const div = document.createElement("div");
-      div.className = `msg ${sender}`;
-      const label = document.createElement("span");
-      label.className = "label";
-      label.textContent = sender === "user" ? "You" : "Bee";
-      div.appendChild(label);
-      div.appendChild(document.createTextNode(text));
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
-
-      if (sender === "ai") speak(text);
-    }
-
-    function personalizedResponse(message) {
-      let prefix = "";
-      if (message.toLowerCase().includes("sad") || message.toLowerCase().includes("tired")) {
-        prefix = userMemory.comfortPhrases[Math.floor(Math.random() * userMemory.comfortPhrases.length)] + " ";
-      } else if (message.toLowerCase().includes("space") && userMemory.likes.includes("space")) {
-        prefix = "Ah, space — our favorite topic! ";
-      }
-      return prefix + `You said: ${message}`;
-    }
-
-    function sendMessage(text = null) {
-      const message = text || chatInput.value.trim();
-      if (!message) return;
-      appendMessage("user", message);
-      chatInput.value = "";
-      setTimeout(() => {
-        const response = personalizedResponse(message);
-        appendMessage("ai", response);
-      }, 1500);
-    }
-
-    sendBtn.addEventListener("click", () => sendMessage());
-    chatInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") sendMessage();
-    });
+    const chatBox = document.getElementById('chat-box');
+    const chatInput = document.getElementById('chat-input');
+    const voiceToggle = document.getElementById('voice-toggle');
+    const typeSound = document.getElementById('keyboard-sound');
+    const enterSound = document.getElementById('enter-sound');
 
     function speak(text) {
+      if (!voiceToggle.checked) return;
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.onstart = () => {
-        let intensity = 0;
-        const pulseInterval = setInterval(() => {
-          intensity = (Math.random() * 0.1 + 1).toFixed(2);
-          avatarImgEinstein.style.transform = `scale(${intensity})`;
-          avatarImgEinstein.style.filter = `brightness(${intensity})`;
-          avatarImgNewton.style.transform = `scale(${intensity})`;
-          avatarImgNewton.style.filter = `brightness(${intensity})`;
-        }, 100);
-        utterance.onend = () => {
-          clearInterval(pulseInterval);
-          avatarImgEinstein.style.transform = "scale(1)";
-          avatarImgEinstein.style.filter = "brightness(1)";
-          avatarImgNewton.style.transform = "scale(1)";
-          avatarImgNewton.style.filter = "brightness(1)";
-        };
-      };
-      window.speechSynthesis.speak(utterance);
+      speechSynthesis.speak(utterance);
     }
 
-    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.interimResults = false;
-    recognition.continuous = false;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = function(event) {
-      const voiceInput = event.results[0][0].transcript;
-      chatInput.value = voiceInput;
-      sendMessage();
-    };
-
-    recognition.onerror = function(event) {
-      console.error("Voice input error:", event.error);
-    };
-
-    chatInput.addEventListener("dblclick", () => {
-      recognition.start();
+    chatInput.addEventListener('input', () => {
+      if (!typeSound.paused) return;
+      typeSound.currentTime = 0;
+      typeSound.play();
     });
 
-    const testMessages = [
-      "Hi Bee!",
-      "I feel a bit tired today.",
-      "What do you think about space?",
-      "Tell me something funny.",
-      "Thanks, Bee. You're great!"
-    ];
-
-    testBtn.addEventListener("click", () => {
-      let delay = 0;
-      testMessages.forEach((msg, index) => {
-        setTimeout(() => sendMessage(msg), delay);
-        delay += 4000;
-      });
+    chatInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message) return;
+        chatBox.innerHTML += `<div><strong>You:</strong> ${message}</div>`;
+        chatInput.value = '';
+        enterSound.currentTime = 0;
+        enterSound.play();
+        setTimeout(() => {
+          const response = "Nova: That was interesting. Tell me more!";
+          chatBox.innerHTML += `<div><strong>Nova:</strong> ${response}</div>`;
+          chatBox.scrollTop = chatBox.scrollHeight;
+          speak(response);
+        }, 800);
+      }
     });
   </script>
 </body>
