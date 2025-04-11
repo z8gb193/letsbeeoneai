@@ -1,42 +1,65 @@
-// Core React component for BeeOneAI chat with image & YouTube support + active AIs
-import React, { useState } from 'react';
+// Core React component for BeeOneAI chat with image & YouTube support + AI memory-based responses, voice loading, memory clearing options, and animations
+import React, { useState, useEffect, useRef } from 'react';
 
 const aiCharacters = {
   Nova: {
     name: 'Nova',
     intro: 'Hi, I’m Nova. Let’s grow together.',
     avatar: '/avatars/Nova.PNG',
+    response: (msg, memory) => {
+      if (memory.includes('mum dead')) return "I'm so sorry to hear about your mum. I'm here for you.";
+      if (memory.includes('loves football')) return "You’d probably enjoy this one — it’s full of great plays!";
+      return `That’s beautiful! Thanks for sharing.`;
+    },
+    voiceHint: 'Google UK English Female',
   },
   Devlin: {
     name: 'Devlin',
     intro: 'I’m Devlin. Let’s get clear, and let’s get moving.',
     avatar: '/avatars/Devlin.PNG',
+    response: (msg, memory) => {
+      if (memory.includes('father ill')) return "You’ve got a lot on your plate. Let’s keep things steady.";
+      return `Interesting. Let’s break it down.`;
+    },
+    voiceHint: 'Google UK English Male',
   },
   Einstein: {
     name: 'Einstein',
     intro: 'Ah! A mind at play. Let’s discover something together.',
     avatar: '/avatars/Einstein.PNG',
+    response: (msg, memory) => `Hmm... that reminds me of relativity.`,
+    voiceHint: 'Google Deutsch',
   },
   ChefGuru: {
     name: 'ChefGuru',
     intro: 'Hey, what’s cooking? Let’s spice things up.',
     avatar: '/avatars/ChefGuru.PNG',
+    response: (msg, memory) => `Looks tasty! I could make a recipe out of this.`,
+    voiceHint: 'Google Italiano',
   },
   BizGuru: {
     name: 'BizGuru',
     intro: 'Time to scale up — strategy, mindset, execution.',
     avatar: '/avatars/BizGuru.PNG',
+    response: (msg, memory) => `Strategically, that’s a solid move.`,
+    voiceHint: 'Google US English',
   },
 };
 
+const extractKeywords = (text) => {
+  const important = /(mum dead|father ill|loves football|lost job|moving house|has anxiety|dog died|in love|hates school)/gi;
+  const matches = text.match(important);
+  return matches ? matches.map((m) => m.toLowerCase()) : [];
+};
+
 const ChatMessage = ({ message }) => {
-  if (message.type === 'text') return <div className="p-2">{message.content}</div>;
-  if (message.type === 'image') return <img src={message.content} alt="Shared" className="max-w-sm rounded-xl m-2" />;
+  if (message.type === 'text') return <div className="p-2 animate-fade-in">{message.content}</div>;
+  if (message.type === 'image') return <img src={message.content} alt="Shared" className="max-w-sm rounded-xl m-2 animate-pop-in" />;
   if (message.type === 'youtube') {
     const videoId = message.content.split('v=')[1]?.split('&')[0] || message.content.split('/').pop();
     return (
       <iframe
-        className="m-2 rounded-xl"
+        className="m-2 rounded-xl animate-fade-in"
         width="400"
         height="225"
         src={`https://www.youtube.com/embed/${videoId}`}
@@ -50,9 +73,43 @@ const ChatMessage = ({ message }) => {
 };
 
 export default function BeeOneAIChat() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem('beeMessages');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [input, setInput] = useState('');
   const [activeAI, setActiveAI] = useState('Nova');
+  const [memory, setMemory] = useState(() => {
+    const saved = localStorage.getItem('beeMemory');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = speechSynthesis.getVoices();
+      if (voices.length) setAvailableVoices(voices);
+    };
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = loadVoices;
+    }
+    loadVoices();
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('beeMessages', JSON.stringify(messages));
+    localStorage.setItem('beeMemory', JSON.stringify(memory));
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, memory]);
+
+  const speakText = (text, voiceHint) => {
+    if (!window.speechSynthesis) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    const match = availableVoices.find(v => v.name.includes(voiceHint));
+    if (match) utterance.voice = match;
+    window.speechSynthesis.speak(utterance);
+  };
 
   const handlePaste = (event) => {
     const items = event.clipboardData?.items;
@@ -61,7 +118,12 @@ export default function BeeOneAIChat() {
       if (item.type.indexOf('image') !== -1) {
         const blob = item.getAsFile();
         const reader = new FileReader();
-        reader.onload = (e) => setMessages((prev) => [...prev, { type: 'image', content: e.target.result }]);
+        reader.onload = (e) => {
+          const content = e.target.result;
+          const aiResponse = aiCharacters[activeAI].response(content, memory);
+          setMessages((prev) => [...prev, { type: 'image', content }, { type: 'text', content: aiResponse }]);
+          speakText(aiResponse, aiCharacters[activeAI].voiceHint);
+        };
         reader.readAsDataURL(blob);
       }
     }
@@ -69,12 +131,40 @@ export default function BeeOneAIChat() {
 
   const handleSend = () => {
     if (!input.trim()) return;
+
+    if (input.toLowerCase().includes("clear all memory")) {
+      setMemory([]);
+      setMessages((prev) => [...prev, { type: 'text', content: 'Memory completely cleared.' }]);
+      return;
+    }
+    if (input.toLowerCase().includes("clear old memory")) {
+      setMemory((prev) => prev.slice(-2));
+      setMessages((prev) => [...prev, { type: 'text', content: 'Old memory cleared, only recent ones kept.' }]);
+      return;
+    }
+
     const youtubeRegex = /(https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/\S+)/gi;
     const youtubeMatch = input.match(youtubeRegex);
+    const foundKeywords = extractKeywords(input);
+    if (foundKeywords.length > 0) {
+      setMemory((prev) => Array.from(new Set([...prev, ...foundKeywords])));
+    }
+
     if (youtubeMatch) {
-      setMessages((prev) => [...prev, { type: 'youtube', content: youtubeMatch[0] }]);
+      const content = youtubeMatch[0];
+      const aiResponse = aiCharacters[activeAI].response(content, memory);
+      setMessages((prev) => [
+        ...prev,
+        { type: 'youtube', content },
+        { type: 'text', content: aiResponse },
+      ]);
+      speakText(aiResponse, aiCharacters[activeAI].voiceHint);
     } else {
-      setMessages((prev) => [...prev, { type: 'text', content: input }]);
+      const userMsg = { type: 'text', content: input };
+      const aiResponse = aiCharacters[activeAI].response(input, memory);
+      const aiMsg = { type: 'text', content: aiResponse };
+      setMessages((prev) => [...prev, userMsg, aiMsg]);
+      speakText(aiResponse, aiCharacters[activeAI].voiceHint);
     }
     setInput('');
   };
@@ -94,7 +184,7 @@ export default function BeeOneAIChat() {
       </div>
 
       <div className="flex items-center gap-3 mb-4">
-        <img src={aiCharacters[activeAI].avatar} alt={activeAI} className="w-12 h-12 rounded-full" />
+        <img src={aiCharacters[activeAI].avatar} alt={activeAI} className="w-12 h-12 rounded-full animate-bounce-slow" />
         <div className="text-lg font-semibold">{aiCharacters[activeAI].intro}</div>
       </div>
 
@@ -102,6 +192,7 @@ export default function BeeOneAIChat() {
         {messages.map((msg, idx) => (
           <ChatMessage key={idx} message={msg} />
         ))}
+        <div ref={chatEndRef} />
       </div>
 
       <div className="mt-4">
@@ -116,8 +207,12 @@ export default function BeeOneAIChat() {
         <button onClick={handleSend} className="px-4 py-2 bg-blue-500 text-white rounded">
           Send
         </button>
+        {memory.length > 0 && (
+          <div className="mt-2 text-sm text-gray-600">
+            <strong>Saved memory:</strong> {memory.join(', ')}
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
