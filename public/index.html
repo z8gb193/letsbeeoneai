@@ -1,159 +1,123 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>BeeOneAI Preview</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f0ff;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+// Core React component for BeeOneAI chat with image & YouTube support + active AIs
+import React, { useState } from 'react';
+
+const aiCharacters = {
+  Nova: {
+    name: 'Nova',
+    intro: 'Hi, I’m Nova. Let’s grow together.',
+    avatar: '/avatars/Nova.PNG',
+  },
+  Devlin: {
+    name: 'Devlin',
+    intro: 'I’m Devlin. Let’s get clear, and let’s get moving.',
+    avatar: '/avatars/Devlin.PNG',
+  },
+  Einstein: {
+    name: 'Einstein',
+    intro: 'Ah! A mind at play. Let’s discover something together.',
+    avatar: '/avatars/Einstein.PNG',
+  },
+  ChefGuru: {
+    name: 'ChefGuru',
+    intro: 'Hey, what’s cooking? Let’s spice things up.',
+    avatar: '/avatars/ChefGuru.PNG',
+  },
+  BizGuru: {
+    name: 'BizGuru',
+    intro: 'Time to scale up — strategy, mindset, execution.',
+    avatar: '/avatars/BizGuru.PNG',
+  },
+};
+
+const ChatMessage = ({ message }) => {
+  if (message.type === 'text') return <div className="p-2">{message.content}</div>;
+  if (message.type === 'image') return <img src={message.content} alt="Shared" className="max-w-sm rounded-xl m-2" />;
+  if (message.type === 'youtube') {
+    const videoId = message.content.split('v=')[1]?.split('&')[0] || message.content.split('/').pop();
+    return (
+      <iframe
+        className="m-2 rounded-xl"
+        width="400"
+        height="225"
+        src={`https://www.youtube.com/embed/${videoId}`}
+        frameBorder="0"
+        allowFullScreen
+        title="YouTube video"
+      />
+    );
+  }
+  return null;
+};
+
+export default function BeeOneAIChat() {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [activeAI, setActiveAI] = useState('Nova');
+
+  const handlePaste = (event) => {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+    for (let item of items) {
+      if (item.type.indexOf('image') !== -1) {
+        const blob = item.getAsFile();
+        const reader = new FileReader();
+        reader.onload = (e) => setMessages((prev) => [...prev, { type: 'image', content: e.target.result }]);
+        reader.readAsDataURL(blob);
+      }
     }
-    h1 { margin-top: 1rem; }
+  };
 
-    #wrapper {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: flex-start;
-      margin-top: 1rem;
+  const handleSend = () => {
+    if (!input.trim()) return;
+    const youtubeRegex = /(https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/\S+)/gi;
+    const youtubeMatch = input.match(youtubeRegex);
+    if (youtubeMatch) {
+      setMessages((prev) => [...prev, { type: 'youtube', content: youtubeMatch[0] }]);
+    } else {
+      setMessages((prev) => [...prev, { type: 'text', content: input }]);
     }
+    setInput('');
+  };
 
-    .side-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin: 0 1rem;
-    }
+  return (
+    <div className="p-4 max-w-2xl mx-auto">
+      <div className="flex gap-2 mb-4">
+        {Object.keys(aiCharacters).map((name) => (
+          <button
+            key={name}
+            onClick={() => setActiveAI(name)}
+            className={`px-3 py-1 rounded-full text-sm ${activeAI === name ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+          >
+            {aiCharacters[name].name}
+          </button>
+        ))}
+      </div>
 
-    .character {
-      width: 110px;
-      height: 110px;
-      border-radius: 12px;
-      background-color: #fff;
-      border: 2px solid #ccc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      position: relative;
-      flex-direction: column;
-    }
+      <div className="flex items-center gap-3 mb-4">
+        <img src={aiCharacters[activeAI].avatar} alt={activeAI} className="w-12 h-12 rounded-full" />
+        <div className="text-lg font-semibold">{aiCharacters[activeAI].intro}</div>
+      </div>
 
-    .character img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      animation: none;
-    }
+      <div className="border p-4 rounded-lg h-[300px] overflow-y-auto bg-white shadow-inner">
+        {messages.map((msg, idx) => (
+          <ChatMessage key={idx} message={msg} />
+        ))}
+      </div>
 
-    .character.active img {
-      animation: pulse 1s infinite;
-    }
-
-    .character .label {
-      font-size: 0.8rem;
-      font-weight: bold;
-    }
-
-    .character .desc {
-      font-size: 0.7rem;
-      color: #666;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 0.9; }
-      50% { transform: scale(1.1); opacity: 1; }
-      100% { transform: scale(1); opacity: 0.9; }
-    }
-
-    #chat {
-      width: 600px;
-      max-height: 400px;
-      overflow-y: auto;
-      background: #fff;
-      padding: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-    }
-
-    #input {
-      width: 600px;
-      display: flex;
-      margin-top: 1rem;
-    }
-
-    #chat-input {
-      flex: 1;
-      padding: 0.7rem;
-      border-radius: 8px;
-      border: 1px solid #aaa;
-      font-size: 1rem;
-    }
-
-  </style>
-</head>
-<body>
-  <h1>BeeOneAI Preview</h1>
-  <div id="wrapper">
-    <div class="side-panel" id="left-panel">
-      <div class="character active"><img src="https://i.imgur.com/tXLwJTx.png" /><div class="label">Pip</div><div class="desc">Help Bot</div></div>
-      <div class="character"><img src="https://i.imgur.com/EYWk0cd.png" /><div class="label">CuteDog</div><div class="desc">Loyal & excited</div></div>
-      <div class="character"><img src="https://i.imgur.com/EYWk0cd.png" /><div class="label">SmittenGirl</div><div class="desc">Hopelessly in love</div></div>
-    </div>
-
-    <div>
-      <div id="chat"></div>
-      <div id="input">
-        <input type="text" id="chat-input" placeholder="Say something..." />
+      <div className="mt-4">
+        <textarea
+          onPaste={handlePaste}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="w-full p-2 border rounded mb-2"
+          rows="3"
+          placeholder="Type or paste a YouTube link, image, or message..."
+        />
+        <button onClick={handleSend} className="px-4 py-2 bg-blue-500 text-white rounded">
+          Send
+        </button>
       </div>
     </div>
+  );
+}
 
-    <div class="side-panel" id="right-panel">
-      <div class="character active"><img src="https://i.imgur.com/YT7LXOs.png" /><div class="label">Nova</div><div class="desc">Caring Default</div></div>
-      <div class="character"><img src="https://i.imgur.com/OCG2N3W.png" /><div class="label">Einstein</div><div class="desc">Wise & calm</div></div>
-      <div class="character"><img src="https://i.imgur.com/OCG2N3W.png" /><div class="label">KarateGuru</div><div class="desc">Unhinged Master</div></div>
-    </div>
-  </div>
-
-  <script>
-    const chatBox = document.getElementById('chat');
-    const chatInput = document.getElementById('chat-input');
-
-    function playTypingSound() {
-      const type = new Audio("https://www.myinstants.com/media/sounds/keyboard-2.mp3");
-      type.volume = 0.2;
-      type.play();
-    }
-
-    function playSendSound() {
-      const enter = new Audio("https://www.myinstants.com/media/sounds/windows_xp_ding.mp3");
-      enter.volume = 0.3;
-      enter.play();
-    }
-
-    chatInput.addEventListener("keypress", function(e) {
-      if (e.key === "Enter") {
-        const msg = chatInput.value.trim();
-        if (!msg) return;
-        chatBox.innerHTML += `<div><strong>You:</strong> ${msg}</div>`;
-        chatInput.value = "";
-        playSendSound();
-
-        setTimeout(() => {
-          playTypingSound();
-          setTimeout(() => {
-            const reply = "Nova: That’s really interesting! Let me think about it 💭";
-            chatBox.innerHTML += `<div><strong>Nova:</strong> ${reply}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-          }, 1500);
-        }, 300);
-      }
-    });
-  </script>
-</body>
-</html>
