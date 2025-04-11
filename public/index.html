@@ -1,5 +1,6 @@
-// Core React component for BeeOneAI chat with image & YouTube support + AI memory-based responses, voice loading, memory clearing options, and animations
+// Full BeeOneAI Chat App with Character Logic, Voice, Memory, Animations, YouTube, and Image Paste Support
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom/client';
 
 const aiCharacters = {
   Nova: {
@@ -9,7 +10,7 @@ const aiCharacters = {
     response: (msg, memory) => {
       if (memory.includes('mum dead')) return "I'm so sorry to hear about your mum. I'm here for you.";
       if (memory.includes('loves football')) return "You’d probably enjoy this one — it’s full of great plays!";
-      return `That’s beautiful! Thanks for sharing.`;
+      return "That’s beautiful! Thanks for sharing.";
     },
     voiceHint: 'Google UK English Female',
   },
@@ -19,7 +20,7 @@ const aiCharacters = {
     avatar: '/avatars/Devlin.PNG',
     response: (msg, memory) => {
       if (memory.includes('father ill')) return "You’ve got a lot on your plate. Let’s keep things steady.";
-      return `Interesting. Let’s break it down.`;
+      return "Interesting. Let’s break it down.";
     },
     voiceHint: 'Google UK English Male',
   },
@@ -27,21 +28,21 @@ const aiCharacters = {
     name: 'Einstein',
     intro: 'Ah! A mind at play. Let’s discover something together.',
     avatar: '/avatars/Einstein.PNG',
-    response: (msg, memory) => `Hmm... that reminds me of relativity.`,
+    response: (msg, memory) => "Hmm... that reminds me of relativity.",
     voiceHint: 'Google Deutsch',
   },
   ChefGuru: {
     name: 'ChefGuru',
     intro: 'Hey, what’s cooking? Let’s spice things up.',
     avatar: '/avatars/ChefGuru.PNG',
-    response: (msg, memory) => `Looks tasty! I could make a recipe out of this.`,
+    response: (msg, memory) => "Looks tasty! I could make a recipe out of this.",
     voiceHint: 'Google Italiano',
   },
   BizGuru: {
     name: 'BizGuru',
     intro: 'Time to scale up — strategy, mindset, execution.',
     avatar: '/avatars/BizGuru.PNG',
-    response: (msg, memory) => `Strategically, that’s a solid move.`,
+    response: (msg, memory) => "Strategically, that’s a solid move.",
     voiceHint: 'Google US English',
   },
 };
@@ -72,7 +73,7 @@ const ChatMessage = ({ message }) => {
   return null;
 };
 
-export default function BeeOneAIChat() {
+function BeeOneAIChat() {
   const [messages, setMessages] = useState(() => {
     const saved = localStorage.getItem('beeMessages');
     return saved ? JSON.parse(saved) : [];
@@ -216,3 +217,6 @@ export default function BeeOneAIChat() {
     </div>
   );
 }
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<BeeOneAIChat />);
