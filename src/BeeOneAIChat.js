@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-
+const recognitionRef = useRef(null);
 const aiCharacters = {
   Nova: {
     name: 'Nova',
@@ -93,13 +93,16 @@ useEffect(() => {
     setInput(prev => prev + ' ' + transcript);
   };
   recognition.onend = () => {
-    if (isListening && voiceInputEnabled) {
-      recognition.start(); // force loop
-    } else {
-      setIsListening(false);
-    }
+    setIsListening(false);
   };
 
+  recognitionRef.current = recognition;
+
+  return () => {
+    recognition.stop();
+    setIsListening(false);
+  };
+}, [language]);
   recognitionRef.current = recognition;
 
   return () => {
@@ -216,17 +219,27 @@ const toggleMic = () => {
           Send
         </button>
         <button
-          id="mic-btn"
-          className={`px-4 py-2 ${isListening ? 'bg-red-500' : 'bg-green-500'} text-white rounded`}
-        >
-          🎤 {isListening ? 'Listening...' : 'Speak'}
-        </button>
-        <button
-  onClick={toggleMic}
-  className={`px-4 py-2 ${isListening ? 'bg-red-500' : 'bg-green-500'} text-white rounded`}
+  onClick={() => {
+    if (voiceInputEnabled) {
+      recognitionRef.current?.start();
+      setIsListening(true);
+    }
+  }}
+  className="px-4 py-2 bg-green-500 text-white rounded"
 >
-  🎤 {isListening ? 'Listening...' : 'Speak'}
+  🎤 Speak to Nova (ON)
 </button>
+
+<button
+  onClick={() => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  }}
+  className="px-4 py-2 bg-red-500 text-white rounded"
+>
+  🔇 Speak to Nova (OFF)
+</button>
+        
       </div>
     </div>
   );
