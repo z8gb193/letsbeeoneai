@@ -78,9 +78,11 @@ function BeeOneAIChat() {
 
     recognition.onstart = () => setIsListening(true);
     recognition.onresult = (event) => {
-      const transcript = event.results[event.resultIndex][0].transcript;
-      setInput((prev) => prev + ' ' + transcript);
-    };
+  const transcript = event.results[event.resultIndex][0].transcript;
+  setInput(transcript);
+  setTimeout(() => handleSend(), 500);  // Auto-send after voice ends
+};
+    
     recognition.onend = () => setIsListening(false);
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
@@ -152,25 +154,25 @@ function BeeOneAIChat() {
   };
 
   return (
-    <div className="p-4" onPaste={handlePaste}>
-      <div className="flex gap-2 mb-4">
-        {Object.keys(aiCharacters).map((name) => (
-          <button
-            key={name}
-            onClick={() => toggleAI(name)}
-            className={`px-3 py-1 rounded-full text-sm flex items-center gap-2 ${
-              activeAIs.includes(name) ? 'bg-blue-600 text-white' : 'bg-gray-200'
-            }`}
-          >
-            <img
-              src={aiCharacters[name].avatar}
-              alt={name}
-              className="w-6 h-6 rounded-full"
-            />
-            {aiCharacters[name].name}
-          </button>
-        ))}
-      </div>
+
+    <div className="flex gap-2">
+  <button
+    onClick={() => {
+      if (isListening) {
+        recognitionRef.current?.stop();
+        setIsListening(false);
+      } else {
+        recognitionRef.current?.start();
+        setIsListening(true);
+      }
+    }}
+    className={`px-4 py-2 ${
+      isListening ? 'bg-red-500' : 'bg-green-500'
+    } text-white rounded`}
+  >
+    {isListening ? '🔇 Stop Listening' : '🎤 Speak'}
+  </button>
+</div>
 
       <div className="mb-4">
         🌐 <strong>Language:</strong>{' '}
@@ -197,13 +199,20 @@ function BeeOneAIChat() {
         <div ref={chatEndRef} />
       </div>
 
-      <textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        className="w-full p-2 border rounded mb-2"
-        rows="3"
-        placeholder="Type a message, paste image, or use voice..."
-      />
+<textarea
+  value={input}
+  onChange={(e) => setInput(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      aiReplies.forEach(speak);
+      handleSend();
+    }
+  }}
+  className="w-full p-2 border rounded mb-2"
+  rows="3"
+  placeholder="Speak or type..."
+/>
 
       <div className="flex gap-2">
         <button
