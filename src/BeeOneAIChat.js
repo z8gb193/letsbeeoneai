@@ -119,20 +119,20 @@ function BeeOneAIChat() {
   };
 
   return (
-    <div className="p-4" onPaste={handlePaste}>
-      <div className="flex gap-2 mb-4">
-        {Object.keys(aiCharacters).map((name) => (
-          <button
-            key={name}
-            onClick={() => toggleAI(name)}
-        className={`px-3 py-1 rounded-full text-sm ${
-  activeAIs.includes(name) ? 'bg-blue-600 text-white' : 'bg-gray-200'
-}`}
-          >
-            {aiCharacters[name].name}
-          </button>
-        ))}
-      </div>
+    <div className="flex gap-2 mb-4">
+  {Object.keys(aiCharacters).map((name) => (
+    <button
+      key={name}
+      onClick={() => toggleAI(name)}
+      className={`px-3 py-1 rounded-full text-sm ${
+        activeAIs.includes(name) ? 'bg-blue-600 text-white' : 'bg-gray-200'
+      }`}
+    >
+      {aiCharacters[name].name}
+    </button>
+  ))}
+</div>
+     
 
       <div className="mb-4">
         🌐 <strong>Language:</strong> 🇺🇸 English
