@@ -244,7 +244,6 @@ function BeeOneAIChat() {
           🎛️ Voice {voiceInputEnabled ? 'On' : 'Off'}
         </button>
       </div>
-    </div>
   );
 }
 
