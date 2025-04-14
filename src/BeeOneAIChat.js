@@ -1,15 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+
 const aiCharacters = {
   Nova: {
     name: 'Nova',
-    avatar: '/avatars/Nova.PNG',
+    avatar: '/avatars/Nova.png', // Main/default image
+    gallery: [
+      '/avatars/Nova.png',
+      '/avatars/Nova1.png',
+      '/avatars/Nova2.png',
+      '/avatars/Nova3.png',
+      '/avatars/Nova4.png',
+      '/avatars/Nova5.png',
+      '/avatars/Nova6.png',
+    ],
     response: (msg, memory) => {
       if (memory.includes('sad')) return "I’m here for you, always.";
       return "Thanks for sharing that.";
     },
   },
 };
+
 
 function ChatMessage({ message }) {
   return (
