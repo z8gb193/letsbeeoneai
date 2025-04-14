@@ -190,14 +190,22 @@ function BeeOneAIChat() {
         </div>
       </div>
 
-      {/* Right Panel */}
-      <div style={{ width: '250px', padding: '1rem', borderLeft: '1px solid #ddd', textAlign: 'center' }}>
-        <p style={{ fontWeight: 'bold' }}>🎥 Nova Video</p>
-        <div style={{ background: '#eee', width: '100%', height: '200px', borderRadius: '0.5rem' }} />
-      </div>
-    </div>
-  );
-}
+{/* Right Panel – Nova Talking Video */}
+<div style={{ width: '250px', padding: '1rem', borderLeft: '1px solid #ddd', textAlign: 'center' }}>
+  <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>🎥 Nova Talking</p>
+  <video
+    src="/videos/NovaTalk1.mp4"
+    autoPlay
+    loop
+    muted
+    playsInline
+    style={{
+      width: '100%',
+      borderRadius: '1rem',
+      boxShadow: '0 0 8px rgba(0,0,0,0.2)',
+    }}
+  />
+</div>
 
 export default BeeOneAIChat;
 
