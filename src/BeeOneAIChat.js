@@ -54,7 +54,20 @@ const ChatMessage = ({ message }) => {
 };
 
 function BeeOneAIChat() {
-  const [messages, setMessages] = useState(() => JSON.parse(localStorage.getItem('beeMessages')) || []);
+  const [messages, setMessages] = useState(() => {
+  const saved = JSON.parse(localStorage.getItem('beeMessages')) || [];
+
+  // 🔍 If all messages look like test junk, clear them
+  if (
+    saved.length > 0 &&
+    saved.every(m => typeof m.content === 'string' && m.content.startsWith('New: Message'))
+  ) {
+    localStorage.removeItem('beeMessages');
+    return [];
+  }
+
+  return saved;
+});
   const [input, setInput] = useState('');
   const [activeAIs, setActiveAIs] = useState(['Nova']);
   const [memory, setMemory] = useState(() => JSON.parse(localStorage.getItem('beeMemory')) || []);
