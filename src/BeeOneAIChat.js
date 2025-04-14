@@ -88,9 +88,11 @@ function BeeOneAIChat() {
 useEffect(() => {
   if (!('webkitSpeechRecognition' in window)) return;
 
+  const recognitionRef = { current: null };
+
   const recognition = new webkitSpeechRecognition();
   recognition.lang = language;
-  recognition.continuous = true; // ✅ keeps mic on until stopped
+  recognition.continuous = true; // ✅ keep listening
   recognition.interimResults = false;
 
   recognition.onstart = () => {
@@ -98,14 +100,40 @@ useEffect(() => {
   };
 
   recognition.onresult = (event) => {
-    const speech = event.results[event.resultIndex][0].transcript;
-    setInput(prev => prev + ' ' + speech); // keep appending
+    const transcript = event.results[event.resultIndex][0].transcript;
+    setInput(prev => prev + ' ' + transcript); // append speech
   };
 
   recognition.onend = () => {
-    // 👇 Do not stop unless toggled manually
-    if (isListening) recognition.start(); // restart if user didn’t press off
-    else setIsListening(false);
+    if (isListening) {
+      recognition.start(); // only restart if toggle is still ON
+    } else {
+      setIsListening(false); // stop fully
+    }
+  };
+
+  recognitionRef.current = recognition;
+
+  const handleMicClick = () => {
+    if (!voiceInputEnabled) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  const micBtn = document.getElementById('mic-btn');
+  if (micBtn) micBtn.addEventListener('click', handleMicClick);
+
+  return () => {
+    if (micBtn) micBtn.removeEventListener('click', handleMicClick);
+    recognitionRef.current?.stop();
+  };
+}, [language, voiceInputEnabled, isListening]);
   };
 
   const handleMicClick = () => {
