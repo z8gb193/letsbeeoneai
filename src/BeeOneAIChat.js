@@ -221,7 +221,7 @@ function BeeOneAIChat() {
           🎛️ Voice {voiceInputEnabled ? 'On' : 'Off'}
         </button>
       </div>  {/* this closes the flex button row */}
-    </div>    {/* this closes the entire chat wrapper */}
+    </div>   
   );
 }
 
