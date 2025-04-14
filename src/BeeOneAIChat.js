@@ -7,11 +7,11 @@ const aiCharacters = {
     avatar: '/avatars/Nova.PNG',
     response: (msg, memory) => {
       if (memory.includes('sad')) return "I’m here for you, always.";
-      if (memory.includes('football')) return "I remember you love football — what a match!";
       return "Thanks for sharing that.";
     },
   },
- 
+  // ...other characters...
+};  // <— ✅ This closing brace MUST be here
 
 function ChatMessage({ message }) {
   if (message.type === 'text') return <div className="my-2">{message.content}</div>;
