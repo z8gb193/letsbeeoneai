@@ -157,7 +157,13 @@ function BeeOneAIChat() {
       setIsListening(false);
     }
   }}
-  style={{ ... }}
+  style={{
+    padding: '0.5rem 1rem',
+    background: voiceInputEnabled ? '#ffc107' : '#6c757d',
+    color: 'white',
+    border: 'none',
+    borderRadius: '0.5rem',
+  }}
 >
   🎛️ Voice {voiceInputEnabled ? 'On' : 'Off'}
 </button>
