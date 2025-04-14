@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-const recognitionRef = useRef(null);
+
 const aiCharacters = {
   Nova: {
     name: 'Nova',
@@ -70,6 +70,7 @@ function BeeOneAIChat() {
   const [voiceInputEnabled, setVoiceInputEnabled] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const chatEndRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem('beeMessages', JSON.stringify(messages));
@@ -77,52 +78,28 @@ function BeeOneAIChat() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, memory]);
 
- const recognitionRef = useRef(null);
+  useEffect(() => {
+    if (!('webkitSpeechRecognition' in window)) return;
 
-useEffect(() => {
-  if (!('webkitSpeechRecognition' in window)) return;
+    const recognition = new webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = language;
 
-  const recognition = new webkitSpeechRecognition();
-  recognition.continuous = true;
-  recognition.interimResults = false;
-  recognition.lang = language;
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event) => {
+      const transcript = event.results[event.resultIndex][0].transcript;
+      setInput(prev => prev + ' ' + transcript);
+    };
+    recognition.onend = () => setIsListening(false);
 
-  recognition.onstart = () => setIsListening(true);
-  recognition.onresult = (event) => {
-    const transcript = event.results[event.resultIndex][0].transcript;
-    setInput(prev => prev + ' ' + transcript);
-  };
-  recognition.onend = () => {
-    setIsListening(false);
-  };
+    recognitionRef.current = recognition;
 
-  recognitionRef.current = recognition;
-
-  return () => {
-    recognition.stop();
-    setIsListening(false);
-  };
-}, [language]);
-  recognitionRef.current = recognition;
-
-  return () => {
-    recognition.stop();
-    setIsListening(false);
-  };
-}, [language]);
-
-// Control mic by button (no more DOM events)
-const toggleMic = () => {
-  if (!voiceInputEnabled) return;
-
-  if (isListening) {
-    recognitionRef.current?.stop();
-    setIsListening(false);
-  } else {
-    recognitionRef.current?.start();
-    setIsListening(true);
-  }
-};
+    return () => {
+      recognition.stop();
+      setIsListening(false);
+    };
+  }, [language]);
 
   const handlePaste = (event) => {
     const items = event.clipboardData?.items;
@@ -219,27 +196,31 @@ const toggleMic = () => {
           Send
         </button>
         <button
-  onClick={() => {
-    if (voiceInputEnabled) {
-      recognitionRef.current?.start();
-      setIsListening(true);
-    }
-  }}
-  className="px-4 py-2 bg-green-500 text-white rounded"
->
-  🎤 Speak to Nova (ON)
-</button>
-
-<button
-  onClick={() => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
-  }}
-  className="px-4 py-2 bg-red-500 text-white rounded"
->
-  🔇 Speak to Nova (OFF)
-</button>
-        
+          onClick={() => {
+            if (voiceInputEnabled) {
+              recognitionRef.current?.start();
+              setIsListening(true);
+            }
+          }}
+          className="px-4 py-2 bg-green-500 text-white rounded"
+        >
+          🎤 Speak to Nova (ON)
+        </button>
+        <button
+          onClick={() => {
+            recognitionRef.current?.stop();
+            setIsListening(false);
+          }}
+          className="px-4 py-2 bg-red-500 text-white rounded"
+        >
+          🔇 Speak to Nova (OFF)
+        </button>
+        <button
+          onClick={() => setVoiceInputEnabled(!voiceInputEnabled)}
+          className={`px-4 py-2 ${voiceInputEnabled ? 'bg-yellow-500' : 'bg-gray-400'} text-white rounded`}
+        >
+          🎛️ Voice {voiceInputEnabled ? 'On' : 'Off'}
+        </button>
       </div>
     </div>
   );
