@@ -62,7 +62,9 @@ function BeeOneAIChat() {
       setInput(transcript);
       setTimeout(() => handleSend(), 500);
     };
-    recognition.onend = () => setIsListening(false);
+    recognition.onend = () => {
+      if (isListening) recognition.start();
+    };
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
       setIsListening(false);
@@ -74,7 +76,7 @@ function BeeOneAIChat() {
       recognition.stop();
       setIsListening(false);
     };
-  }, [language]);
+  }, [language, isListening]);
 
   const extractKeywords = (text) => {
     const keywords = ['sad', 'father', 'career', 'football'];
@@ -104,74 +106,80 @@ function BeeOneAIChat() {
   };
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <div className="mb-4">
-        🌐 <strong>Language:</strong>{' '}
-        {language === 'en-US' ? '🇺🇸 English' : language}
+    <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
+      {/* Left Panel */}
+      <div style={{ width: '200px', padding: '1rem', borderRight: '1px solid #ddd', textAlign: 'center' }}>
+        <img src={aiCharacters.Nova.avatar} alt="Nova" style={{ width: '100%', borderRadius: '1rem' }} />
+        <p style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>Nova</p>
       </div>
 
-      <div className="mb-4">
-        <div className="flex items-center gap-2 font-bold">
-          <img
-            src={aiCharacters.Nova.avatar}
-            alt="Nova"
-            className="w-8 h-8 rounded-full"
-          />
-          {aiCharacters.Nova.intro}
+      {/* Center Panel */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1rem' }}>
+        <div style={{ flex: 1, overflowY: 'auto', background: '#f9f9f9', padding: '1rem', borderRadius: '0.5rem' }}>
+          {messages.map((msg, idx) => (
+            <ChatMessage key={idx} message={msg} />
+          ))}
+          <div ref={chatEndRef} />
+        </div>
+
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
+          placeholder="Type or speak your message..."
+          style={{
+            marginTop: '1rem',
+            padding: '0.75rem',
+            borderRadius: '0.5rem',
+            border: '1px solid #ccc',
+            width: '100%',
+            resize: 'none',
+            fontSize: '1rem',
+            height: '80px',
+          }}
+        />
+
+        <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+          <button
+            onClick={() => {
+              if (isListening) {
+                recognitionRef.current?.stop();
+                setIsListening(false);
+              } else {
+                recognitionRef.current?.start();
+                setIsListening(true);
+              }
+            }}
+            style={{ padding: '0.5rem 1rem', background: isListening ? '#dc3545' : '#28a745', color: 'white', border: 'none', borderRadius: '0.5rem' }}
+          >
+            {isListening ? '🔇 Stop Listening' : '🎤 Speak'}
+          </button>
+
+          <button
+            onClick={() => setVoiceInputEnabled(!voiceInputEnabled)}
+            style={{ padding: '0.5rem 1rem', background: voiceInputEnabled ? '#ffc107' : '#6c757d', color: 'white', border: 'none', borderRadius: '0.5rem' }}
+          >
+            🎛️ Voice {voiceInputEnabled ? 'On' : 'Off'}
+          </button>
         </div>
       </div>
 
-      <div className="mb-4">
-        {messages.map((msg, idx) => (
-          <ChatMessage key={idx} message={msg} />
-        ))}
-        <div ref={chatEndRef} />
-      </div>
-
-      <textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
-          }
-        }}
-        className="w-full p-2 border rounded mb-2"
-        rows="3"
-        placeholder="Speak or type..."
-      />
-
-      <div className="flex gap-2">
-        <button
-          onClick={() => {
-            if (isListening) {
-              recognitionRef.current?.stop();
-              setIsListening(false);
-            } else {
-              recognitionRef.current?.start();
-              setIsListening(true);
-            }
-          }}
-          className={`px-4 py-2 ${
-            isListening ? 'bg-red-500' : 'bg-green-500'
-          } text-white rounded`}
-        >
-          {isListening ? '🔇 Stop Listening' : '🎤 Speak'}
-        </button>
-
-        <button
-          onClick={() => setVoiceInputEnabled(!voiceInputEnabled)}
-          className={`px-4 py-2 ${
-            voiceInputEnabled ? 'bg-yellow-500' : 'bg-gray-400'
-          } text-white rounded`}
-        >
-          🎧 Voice {voiceInputEnabled ? 'On' : 'Off'}
-        </button>
+      {/* Right Panel */}
+      <div style={{ width: '250px', padding: '1rem', borderLeft: '1px solid #ddd', textAlign: 'center' }}>
+        <p style={{ fontWeight: 'bold' }}>🎥 Nova Video</p>
+        <div style={{ background: '#eee', width: '100%', height: '200px', borderRadius: '0.5rem' }}>
+          {/* Placeholder for future video */}
+        </div>
       </div>
     </div>
   );
 }
 
 export default BeeOneAIChat;
+
 
