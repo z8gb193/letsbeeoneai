@@ -145,27 +145,22 @@ function BeeOneAIChat() {
         />
 
         <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
-          <button
-            onClick={() => {
-              if (isListening) {
-                recognitionRef.current?.stop();
-                setIsListening(false);
-              } else {
-                recognitionRef.current?.start();
-                setIsListening(true);
-              }
-            }}
-            style={{ padding: '0.5rem 1rem', background: isListening ? '#dc3545' : '#28a745', color: 'white', border: 'none', borderRadius: '0.5rem' }}
-          >
-            {isListening ? '🔇 Stop Listening' : '🎤 Speak'}
-          </button>
-
-          <button
-            onClick={() => setVoiceInputEnabled(!voiceInputEnabled)}
-            style={{ padding: '0.5rem 1rem', background: voiceInputEnabled ? '#ffc107' : '#6c757d', color: 'white', border: 'none', borderRadius: '0.5rem' }}
-          >
-            🎛️ Voice {voiceInputEnabled ? 'On' : 'Off'}
-          </button>
+ <button
+  onClick={() => {
+    const next = !voiceInputEnabled;
+    setVoiceInputEnabled(next);
+    if (next) {
+      recognitionRef.current?.start();
+      setIsListening(true);
+    } else {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    }
+  }}
+  style={{ ... }}
+>
+  🎛️ Voice {voiceInputEnabled ? 'On' : 'Off'}
+</button>
         </div>
       </div>
 
