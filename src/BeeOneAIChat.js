@@ -90,37 +90,41 @@ useEffect(() => {
 
   const recognition = new webkitSpeechRecognition();
   recognition.lang = language;
-  recognition.continuous = false;
+  recognition.continuous = true; // ✅ keeps mic on until stopped
   recognition.interimResults = false;
 
+  recognition.onstart = () => {
+    setIsListening(true);
+  };
+
   recognition.onresult = (event) => {
-    const speech = event.results[0][0].transcript;
-    setInput(speech);
-    setIsListening(false); // turn off after speech captured
+    const speech = event.results[event.resultIndex][0].transcript;
+    setInput(prev => prev + ' ' + speech); // keep appending
   };
 
   recognition.onend = () => {
-    setIsListening(false); // fallback if mic ends
+    // 👇 Do not stop unless toggled manually
+    if (isListening) recognition.start(); // restart if user didn’t press off
+    else setIsListening(false);
   };
 
   const handleMicClick = () => {
-    if (voiceInputEnabled) {
-      if (isListening) {
-        recognition.stop();
-      } else {
-        recognition.start();
-      }
-      setIsListening(!isListening);
+    if (!voiceInputEnabled) return;
+
+    if (isListening) {
+      recognition.stop(); // stop manually
+      setIsListening(false);
+    } else {
+      recognition.start(); // start manually
+      setIsListening(true);
     }
   };
 
-  const micButton = document.getElementById('mic-btn');
-  if (micButton) {
-    micButton.addEventListener('click', handleMicClick);
-  }
+  const micBtn = document.getElementById('mic-btn');
+  if (micBtn) micBtn.addEventListener('click', handleMicClick);
 
   return () => {
-    if (micButton) micButton.removeEventListener('click', handleMicClick);
+    if (micBtn) micBtn.removeEventListener('click', handleMicClick);
     recognition.stop();
   };
 }, [language, voiceInputEnabled, isListening]);
@@ -219,9 +223,7 @@ useEffect(() => {
         </button>
        <button
   id="mic-btn"
-  className={`px-4 py-2 ${
-    isListening ? 'bg-red-500' : 'bg-green-500'
-  } text-white rounded`}
+  className={`px-4 py-2 ${isListening ? 'bg-red-500' : 'bg-green-500'} text-white rounded`}
 >
   🎤 {isListening ? 'Listening...' : 'Speak'}
 </button>
