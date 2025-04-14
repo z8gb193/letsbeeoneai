@@ -1,7 +1,16 @@
 {
-  "name": "letsbeeoneai",
+  "name": "beeoneai",
   "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
   "dependencies": {
-    "node-fetch": "^2.6.7"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-scripts": "5.0.1"
   }
 }
