@@ -56,12 +56,21 @@ function BeeOneAIChat() {
     recognition.interimResults = false;
     recognition.lang = language;
 
-    recognition.onstart = () => setIsListening(true);
-    recognition.onresult = (event) => {
-      const transcript = event.results[event.resultIndex][0].transcript;
-      setInput(transcript);
-      setTimeout(() => handleSend(), 500);
-    };
+recognition.onresult = (event) => {
+  const transcript = event.results[event.resultIndex][0].transcript;
+  setInput('');
+  
+  const userMsg = { type: 'text', content: transcript, isUser: true };
+  const newMemory = extractKeywords(transcript);
+  const updatedMemory = Array.from(new Set([...memory, ...newMemory]));
+  setMemory(updatedMemory);
+
+  const replyText = aiCharacters.Nova.response(transcript, updatedMemory);
+  const novaMsg = { type: 'text', content: replyText, isUser: false };
+
+  setMessages((prev) => [...prev, userMsg, novaMsg]);
+  speak(replyText);
+};
     recognition.onend = () => {
       if (isListening) recognition.start();
     };
