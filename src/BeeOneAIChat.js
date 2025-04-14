@@ -153,72 +153,80 @@ function BeeOneAIChat() {
   };
 
   return (
-    <div className="p-4" onPaste={handlePaste}>
-      <div className="flex gap-2 mb-4">
-        {Object.keys(aiCharacters).map((name) => (
-          <button
-            key={name}
-            onClick={() => toggleAI(name)}
-            className={`px-3 py-1 rounded-full text-sm ${
-              activeAIs.includes(name) ? 'bg-blue-600 text-white' : 'bg-gray-200'
-            }`}
-          >
-            {aiCharacters[name].name}
-          </button>
-        ))}
-      </div>
-
-      <div className="mb-4">🌐 <strong>Language:</strong> 🇺🇸 English</div>
-
-      <div className="mb-4">
-        {activeAIs.map(ai => (
-          <div key={ai} className="font-bold">{aiCharacters[ai].intro}</div>
-        ))}
-      </div>
-
-      <div className="mb-4">
-        {messages.map((msg, idx) => (
-          <ChatMessage key={idx} message={msg} />
-        ))}
-        <div ref={chatEndRef} />
-      </div>
-
-      <textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        className="w-full p-2 border rounded mb-2"
-        rows="3"
-        placeholder="Type a message, paste image, or use voice..."
-      />
-
-      <div className="flex gap-2">
-        <button onClick={handleSend} className="px-4 py-2 bg-blue-500 text-white rounded">
-          Send
-        </button>
+  <div className="p-4" onPaste={handlePaste}>
+    <div className="flex gap-2 mb-4">
+      {Object.keys(aiCharacters).map((name) => (
         <button
-  onClick={() => {
-    if (voiceInputEnabled) {
-      recognitionRef.current?.start();
-      setIsListening(true);
-    }
-  }}
-  className="px-4 py-2 bg-green-500 text-white rounded"
->
-  🎤 Speak to Nova (ON)
-</button>
-
-<button
-  onClick={() => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
-  }}
-  className="px-4 py-2 bg-red-500 text-white rounded"
->
-  🔇 Speak to Nova (OFF)
-</button>
-      </div>
+          key={name}
+          onClick={() => toggleAI(name)}
+          className={`px-3 py-1 rounded-full text-sm ${
+            activeAIs.includes(name) ? 'bg-blue-600 text-white' : 'bg-gray-200'
+          }`}
+        >
+          {aiCharacters[name].name}
+        </button>
+      ))}
     </div>
-  );
-}
 
-export default BeeOneAIChat;
+    <div className="mb-4">
+      🌐 <strong>Language:</strong> 🇺🇸 English
+    </div>
+
+    <div className="mb-4">
+      {activeAIs.map(ai => (
+        <div key={ai} className="font-bold">
+          {aiCharacters[ai].intro}
+        </div>
+      ))}
+    </div>
+
+    <div className="mb-4">
+      {messages.map((msg, idx) => (
+        <ChatMessage key={idx} message={msg} />
+      ))}
+      <div ref={chatEndRef} />
+    </div>
+
+    <textarea
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      className="w-full p-2 border rounded mb-2"
+      rows="3"
+      placeholder="Type a message, paste image, or use voice..."
+    />
+
+    <div className="flex gap-2">
+      <button onClick={handleSend} className="px-4 py-2 bg-blue-500 text-white rounded">
+        Send
+      </button>
+      <button
+        onClick={() => {
+          if (voiceInputEnabled) {
+            recognitionRef.current?.start();
+            setIsListening(true);
+          }
+        }}
+        className="px-4 py-2 bg-green-500 text-white rounded"
+      >
+        🎤 Speak to Nova (ON)
+      </button>
+      <button
+        onClick={() => {
+          recognitionRef.current?.stop();
+          setIsListening(false);
+        }}
+        className="px-4 py-2 bg-red-500 text-white rounded"
+      >
+        🔇 Speak to Nova (OFF)
+      </button>
+      <button
+        onClick={() => setVoiceInputEnabled(!voiceInputEnabled)}
+        className={`px-4 py-2 ${
+          voiceInputEnabled ? 'bg-yellow-500' : 'bg-gray-400'
+        } text-white rounded`}
+      >
+        🎛️ Voice {voiceInputEnabled ? 'On' : 'Off'}
+      </button>
+    </div>
+  </div>
+);
