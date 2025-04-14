@@ -77,47 +77,49 @@ function BeeOneAIChat() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, memory]);
 
-  useEffect(() => {
-    if (!('webkitSpeechRecognition' in window)) return;
+ const recognitionRef = useRef(null);
 
-    const recognition = new webkitSpeechRecognition();
-    recognition.lang = language;
-    recognition.continuous = true;
-    recognition.interimResults = false;
+useEffect(() => {
+  if (!('webkitSpeechRecognition' in window)) return;
 
-    let shouldContinue = false;
+  const recognition = new webkitSpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.lang = language;
 
-    recognition.onstart = () => setIsListening(true);
-    recognition.onresult = (event) => {
-      const transcript = event.results[event.resultIndex][0].transcript;
-      setInput(prev => prev + ' ' + transcript);
-    };
-    recognition.onend = () => {
-      if (shouldContinue) recognition.start();
-      else setIsListening(false);
-    };
+  recognition.onstart = () => setIsListening(true);
+  recognition.onresult = (event) => {
+    const transcript = event.results[event.resultIndex][0].transcript;
+    setInput(prev => prev + ' ' + transcript);
+  };
+  recognition.onend = () => {
+    if (isListening && voiceInputEnabled) {
+      recognition.start(); // force loop
+    } else {
+      setIsListening(false);
+    }
+  };
 
-    const handleMicClick = () => {
-      if (!voiceInputEnabled) return;
+  recognitionRef.current = recognition;
 
-      if (isListening) {
-        shouldContinue = false;
-        recognition.stop();
-      } else {
-        shouldContinue = true;
-        recognition.start();
-      }
-    };
+  return () => {
+    recognition.stop();
+    setIsListening(false);
+  };
+}, [language]);
 
-    const micBtn = document.getElementById('mic-btn');
-    if (micBtn) micBtn.addEventListener('click', handleMicClick);
+// Control mic by button (no more DOM events)
+const toggleMic = () => {
+  if (!voiceInputEnabled) return;
 
-    return () => {
-      if (micBtn) micBtn.removeEventListener('click', handleMicClick);
-      shouldContinue = false;
-      recognition.stop();
-    };
-  }, [language, voiceInputEnabled, isListening]);
+  if (isListening) {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  } else {
+    recognitionRef.current?.start();
+    setIsListening(true);
+  }
+};
 
   const handlePaste = (event) => {
     const items = event.clipboardData?.items;
