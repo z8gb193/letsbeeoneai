@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 const aiCharacters = {
   Nova: {
     name: 'Nova',
-    intro: 'Hi, I’m Nova. Let’s grow together.',
     avatar: '/avatars/Nova.PNG',
     response: (msg, memory) => {
       if (memory.includes('sad')) return "I’m here for you, always.";
@@ -14,11 +13,7 @@ const aiCharacters = {
 
 function ChatMessage({ message }) {
   return (
-    <div
-      className={`my-2 ${
-        message.isUser ? 'text-right text-blue-600' : 'text-left text-gray-800'
-      }`}
-    >
+    <div className={`my-2 ${message.isUser ? 'text-right text-blue-600' : 'text-left text-gray-800'}`}>
       {message.content}
     </div>
   );
@@ -28,11 +23,12 @@ function BeeOneAIChat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [memory, setMemory] = useState([]);
-  const [language, setLanguage] = useState('en-US');
+  const [language] = useState('en-GB');
   const [isListening, setIsListening] = useState(false);
   const chatEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
+  // Load messages and memory on mount
   useEffect(() => {
     const savedMessages = JSON.parse(localStorage.getItem('beeMessages')) || [];
     const savedMemory = JSON.parse(localStorage.getItem('beeMemory')) || [];
@@ -40,12 +36,14 @@ function BeeOneAIChat() {
     setMemory(savedMemory);
   }, []);
 
+  // Save messages and memory
   useEffect(() => {
     localStorage.setItem('beeMessages', JSON.stringify(messages));
     localStorage.setItem('beeMemory', JSON.stringify(memory));
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, memory]);
 
+  // Voice recognition setup
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
@@ -57,17 +55,7 @@ function BeeOneAIChat() {
 
     recognition.onresult = (event) => {
       const transcript = event.results[event.resultIndex][0].transcript;
-      const userMsg = { type: 'text', content: transcript, isUser: true };
-      const newMemory = extractKeywords(transcript);
-      const updatedMemory = Array.from(new Set([...memory, ...newMemory]));
-      setMemory(updatedMemory);
-
-      const replyText = aiCharacters.Nova.response(transcript, updatedMemory);
-      const novaMsg = { type: 'text', content: replyText, isUser: false };
-
-      setMessages((prev) => [...prev, userMsg, novaMsg]);
-      speak(replyText);
-      setInput('');
+      handleUserMessage(transcript);
     };
 
     recognition.onend = () => {
@@ -81,22 +69,51 @@ function BeeOneAIChat() {
 
     recognitionRef.current = recognition;
 
-    return () => {
-      recognition.stop();
-      setIsListening(false);
-    };
-  }, [language, isListening]);
+    return () => recognition.stop();
+  }, [isListening, language]);
 
+  // Keyword memory function
   const extractKeywords = (text) => {
     const keywords = ['sad', 'father', 'career', 'football'];
     return keywords.filter((word) => text.toLowerCase().includes(word));
   };
 
+  // Fully working voice function
   const speak = (text) => {
     if (!window.speechSynthesis) return;
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = language;
-    window.speechSynthesis.speak(utter);
+    const synth = window.speechSynthesis;
+
+    const speakNow = () => {
+      const voices = synth.getVoices();
+      const selectedVoice = voices.find(v => v.name === 'Microsoft Libby Online (Natural)') || voices[0];
+
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.voice = selectedVoice;
+      utter.lang = selectedVoice?.lang || 'en-GB';
+      utter.rate = 1;
+      utter.pitch = 1;
+      synth.cancel(); // stop any ongoing speech
+      synth.speak(utter);
+    };
+
+    if (synth.getVoices().length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => speakNow();
+    } else {
+      speakNow();
+    }
+  };
+
+  const handleUserMessage = (text) => {
+    const userMsg = { type: 'text', content: text, isUser: true };
+    const newMemory = extractKeywords(text);
+    const updatedMemory = Array.from(new Set([...memory, ...newMemory]));
+    const replyText = aiCharacters.Nova.response(text, updatedMemory);
+    const novaMsg = { type: 'text', content: replyText, isUser: false };
+
+    setMessages((prev) => [...prev, userMsg, novaMsg]);
+    setMemory(updatedMemory);
+    setInput('');
+    speak(replyText);
   };
 
   return (
@@ -122,17 +139,7 @@ function BeeOneAIChat() {
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              const userMsg = { type: 'text', content: input, isUser: true };
-              const newMemory = extractKeywords(input);
-              const updatedMemory = Array.from(new Set([...memory, ...newMemory]));
-              setMemory(updatedMemory);
-
-              const replyText = aiCharacters.Nova.response(input, updatedMemory);
-              const novaMsg = { type: 'text', content: replyText, isUser: false };
-
-              setMessages((prev) => [...prev, userMsg, novaMsg]);
-              speak(replyText);
-              setInput('');
+              handleUserMessage(input);
             }
           }}
           placeholder="Type or speak your message..."
@@ -159,7 +166,13 @@ function BeeOneAIChat() {
                 setIsListening(true);
               }
             }}
-            style={{ padding: '0.5rem 1rem', background: isListening ? '#dc3545' : '#28a745', color: 'white', border: 'none', borderRadius: '0.5rem' }}
+            style={{
+              padding: '0.5rem 1rem',
+              background: isListening ? '#dc3545' : '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.5rem',
+            }}
           >
             {isListening ? '🔇 Stop Listening' : '🎤 Speak'}
           </button>
@@ -169,9 +182,7 @@ function BeeOneAIChat() {
       {/* Right Panel */}
       <div style={{ width: '250px', padding: '1rem', borderLeft: '1px solid #ddd', textAlign: 'center' }}>
         <p style={{ fontWeight: 'bold' }}>🎥 Nova Video</p>
-        <div style={{ background: '#eee', width: '100%', height: '200px', borderRadius: '0.5rem' }}>
-          {/* Placeholder for future video */}
-        </div>
+        <div style={{ background: '#eee', width: '100%', height: '200px', borderRadius: '0.5rem' }} />
       </div>
     </div>
   );
