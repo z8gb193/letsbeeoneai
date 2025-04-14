@@ -281,5 +281,21 @@ function BeeOneAIChat() {
   );
 }
 
+async function fetchReplyFromBackend(character, message, memory) {
+  try {
+    const response = await fetch('https://beeoneai-backend.onrender.com/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ character, message, memory }),
+    });
+
+    const data = await response.json();
+    return data.reply || "Hmm... I didn’t quite get that.";
+  } catch (error) {
+    console.error("Backend error:", error);
+    return "Hmm... Nova couldn’t connect just now.";
+  }
+}
+
 export default BeeOneAIChat;
 
