@@ -11,41 +11,7 @@ const aiCharacters = {
       return "Thanks for sharing that.";
     },
   },
-  Devlin: {
-    name: 'Devlin',
-    intro: 'I’m Devlin. Let’s get clear, and let’s get moving.",
-    avatar: '/avatars/Devlin.PNG',
-    response: (msg, memory) => {
-      if (memory.includes('father')) return "Still thinking of your dad. You’ve got this.";
-      if (memory.includes('career')) return "You mentioned your job — any progress?";
-      return "Got it. Let’s keep going.";
-    },
-  },
-  Pip: {
-    name: 'Pip',
-    intro: 'Hi, I’m Pip. I can guide you on how to use the system!',
-    avatar: '/avatars/Pip.PNG',
-    response: () => "Need help? Just type a message, paste an image, or click the 🎤 to speak.",
-  },
-  Einstein: {
-    name: 'Einstein',
-    intro: 'Ah! A mind at play. Let’s discover something together.',
-    avatar: '/avatars/Einstein.PNG',
-    response: () => "Fascinating thought!",
-  },
-  ChefGuru: {
-    name: 'ChefGuru',
-    intro: 'Hey, what’s cooking? Let’s spice things up.',
-    avatar: '/avatars/ChefGuru.PNG',
-    response: () => "Delicious idea!",
-  },
-  BizGuru: {
-    name: 'BizGuru',
-    intro: 'Time to scale up — strategy, mindset, execution.',
-    avatar: '/avatars/BizGuru.PNG',
-    response: () => "That’s a solid insight.",
-  },
-};
+ 
 
 const ChatMessage = ({ message }) => {
   if (message.type === 'text') return <div className="my-2">{message.content}</div>;
