@@ -222,11 +222,11 @@ const toggleMic = () => {
           🎤 {isListening ? 'Listening...' : 'Speak'}
         </button>
         <button
-          onClick={() => setVoiceInputEnabled(!voiceInputEnabled)}
-          className={`px-4 py-2 ${voiceInputEnabled ? 'bg-yellow-500' : 'bg-gray-400'} text-white rounded`}
-        >
-          🎛️ Voice {voiceInputEnabled ? 'On' : 'Off'}
-        </button>
+  onClick={toggleMic}
+  className={`px-4 py-2 ${isListening ? 'bg-red-500' : 'bg-green-500'} text-white rounded`}
+>
+  🎤 {isListening ? 'Listening...' : 'Speak'}
+</button>
       </div>
     </div>
   );
