@@ -4,7 +4,7 @@ const aiCharacters = {
   Nova: {
     name: 'Nova',
     intro: 'Hi, I’m Nova. Let’s grow together.',
-    avatar: '/avatars/Nova.PNG',
+    avatar: '/avatars/Nova.PNG', // Served from public/avatars/
     response: (msg, memory) => {
       if (memory.includes('sad')) return "I’m here for you, always.";
       return "Thanks for sharing that.";
