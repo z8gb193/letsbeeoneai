@@ -1,0 +1,192 @@
+import React, { useState, useEffect, useRef } from 'react';
+
+const aiCharacters = {
+  Nova: {
+    name: 'Nova',
+    intro: 'Hi, I’m Nova. Let’s grow together.',
+    avatar: '/avatars/Nova.PNG',
+    response: (msg, memory) => {
+      if (memory.includes('sad')) return "I’m here for you, always.";
+      if (memory.includes('football')) return "I remember you love football — what a match!";
+      return "Thanks for sharing that.";
+    },
+  },
+  Devlin: {
+    name: 'Devlin',
+    intro: 'I’m Devlin. Let’s get clear, and let’s get moving.',
+    avatar: '/avatars/Devlin.PNG',
+    response: (msg, memory) => {
+      if (memory.includes('father')) return "Still thinking of your dad. You’ve got this.";
+      if (memory.includes('career')) return "You mentioned your job — any progress?";
+      return "Got it. Let’s keep going.";
+    },
+  },
+  Pip: {
+    name: 'Pip',
+    intro: 'Hi, I’m Pip. I can guide you on how to use the system!',
+    avatar: '/avatars/Pip.PNG',
+    response: () => "Need help? Just type a message, paste an image, or click the 🎤 to speak. Switch AIs anytime using the buttons above!",
+  },
+  Einstein: {
+    name: 'Einstein',
+    intro: 'Ah! A mind at play. Let’s discover something together.',
+    avatar: '/avatars/Einstein.PNG',
+    response: () => "Fascinating thought!",
+  },
+  ChefGuru: {
+    name: 'ChefGuru',
+    intro: 'Hey, what’s cooking? Let’s spice things up.',
+    avatar: '/avatars/ChefGuru.PNG',
+    response: () => "Delicious idea!",
+  },
+  BizGuru: {
+    name: 'BizGuru',
+    intro: 'Time to scale up — strategy, mindset, execution.',
+    avatar: '/avatars/BizGuru.PNG',
+    response: () => "That’s a solid insight.",
+  },
+};
+
+const ChatMessage = ({ message }) => {
+  if (message.type === 'text') return <div className="my-2">{message.content}</div>;
+  if (message.type === 'image') return <img src={message.content} alt="Shared" className="my-2 rounded" />;
+  return null;
+};
+
+function BeeOneAIChat() {
+  const [messages, setMessages] = useState(() => JSON.parse(localStorage.getItem('beeMessages')) || []);
+  const [input, setInput] = useState('');
+  const [activeAIs, setActiveAIs] = useState(['Nova']);
+  const [memory, setMemory] = useState(() => JSON.parse(localStorage.getItem('beeMemory')) || []);
+  const [language, setLanguage] = useState('en-US');
+  const [voiceInputEnabled, setVoiceInputEnabled] = useState(true);
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    localStorage.setItem('beeMessages', JSON.stringify(messages));
+    localStorage.setItem('beeMemory', JSON.stringify(memory));
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, memory]);
+
+  useEffect(() => {
+    if (!('webkitSpeechRecognition' in window)) return;
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = language;
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onresult = (event) => {
+      const speech = event.results[0][0].transcript;
+      setInput(speech);
+    };
+    document.getElementById('mic-btn')?.addEventListener('click', () => {
+      if (voiceInputEnabled) recognition.start();
+    });
+  }, [language, voiceInputEnabled]);
+
+  const handlePaste = (event) => {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+    for (let item of items) {
+      if (item.type.indexOf('image') !== -1) {
+        const blob = item.getAsFile();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target.result;
+          const replies = activeAIs.map((ai) => aiCharacters[ai].response('', memory));
+          const responses = replies.map(r => ({ type: 'text', content: r }));
+          setMessages((prev) => [...prev, { type: 'image', content }, ...responses]);
+          replies.forEach(speak);
+        };
+        reader.readAsDataURL(blob);
+      }
+    }
+  };
+
+  const extractKeywords = (text) => {
+    const keywords = ['sad', 'father', 'career', 'football'];
+    return keywords.filter(word => text.toLowerCase().includes(word));
+  };
+
+  const handleSend = () => {
+    if (!input.trim()) return;
+    const userMsg = { type: 'text', content: input };
+    const newMemory = extractKeywords(input);
+    if (newMemory.length) setMemory((prev) => Array.from(new Set([...prev, ...newMemory])));
+    const aiReplies = activeAIs.map(ai => aiCharacters[ai].response(input, memory));
+    const aiMsgs = aiReplies.map(reply => ({ type: 'text', content: reply }));
+    setMessages((prev) => [...prev, userMsg, ...aiMsgs]);
+    aiReplies.forEach(speak);
+    setInput('');
+  };
+
+  const speak = (text) => {
+    if (!window.speechSynthesis) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = language;
+    window.speechSynthesis.speak(utter);
+  };
+
+  const toggleAI = (name) => {
+    setActiveAIs((prev) =>
+      prev.includes(name) ? prev.filter(n => n !== name) : [...(prev.length === 2 ? prev.slice(1) : prev), name]
+    );
+  };
+
+  return (
+    <div className="p-4" onPaste={handlePaste}>
+      <div className="flex gap-2 mb-4">
+        {Object.keys(aiCharacters).map((name) => (
+          <button
+            key={name}
+            onClick={() => toggleAI(name)}
+            className={`px-3 py-1 rounded-full text-sm ${
+              activeAIs.includes(name) ? 'bg-blue-600 text-white' : 'bg-gray-200'
+            }`}
+          >
+            {aiCharacters[name].name}
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-4">🌐 <strong>Language:</strong> 🇺🇸 English</div>
+
+      <div className="mb-4">
+        {activeAIs.map((ai) => (
+          <div key={ai} className="font-bold">{aiCharacters[ai].intro}</div>
+        ))}
+      </div>
+
+      <div className="mb-4">
+        {messages.map((msg, idx) => (
+          <ChatMessage key={idx} message={msg} />
+        ))}
+        <div ref={chatEndRef} />
+      </div>
+
+      <textarea
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        className="w-full p-2 border rounded mb-2"
+        rows="3"
+        placeholder="Type a message, paste image, or use voice..."
+      />
+
+      <div className="flex gap-2">
+        <button onClick={handleSend} className="px-4 py-2 bg-blue-500 text-white rounded">
+          Send
+        </button>
+        <button id="mic-btn" className="px-4 py-2 bg-green-500 text-white rounded">
+          🎤 Speak
+        </button>
+        <button
+          onClick={() => setVoiceInputEnabled(!voiceInputEnabled)}
+          className={`px-4 py-2 ${voiceInputEnabled ? 'bg-yellow-500' : 'bg-gray-400'} text-white rounded`}
+        >
+          🎛️ Voice {voiceInputEnabled ? 'On' : 'Off'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default BeeOneAIChat;
