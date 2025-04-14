@@ -196,31 +196,26 @@ function BeeOneAIChat() {
           Send
         </button>
         <button
-          onClick={() => {
-            if (voiceInputEnabled) {
-              recognitionRef.current?.start();
-              setIsListening(true);
-            }
-          }}
-          className="px-4 py-2 bg-green-500 text-white rounded"
-        >
-          🎤 Speak to Nova (ON)
-        </button>
-        <button
-          onClick={() => {
-            recognitionRef.current?.stop();
-            setIsListening(false);
-          }}
-          className="px-4 py-2 bg-red-500 text-white rounded"
-        >
-          🔇 Speak to Nova (OFF)
-        </button>
-        <button
-          onClick={() => setVoiceInputEnabled(!voiceInputEnabled)}
-          className={`px-4 py-2 ${voiceInputEnabled ? 'bg-yellow-500' : 'bg-gray-400'} text-white rounded`}
-        >
-          🎛️ Voice {voiceInputEnabled ? 'On' : 'Off'}
-        </button>
+  onClick={() => {
+    if (voiceInputEnabled) {
+      recognitionRef.current?.start();
+      setIsListening(true);
+    }
+  }}
+  className="px-4 py-2 bg-green-500 text-white rounded"
+>
+  🎤 Speak to Nova (ON)
+</button>
+
+<button
+  onClick={() => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  }}
+  className="px-4 py-2 bg-red-500 text-white rounded"
+>
+  🔇 Speak to Nova (OFF)
+</button>
       </div>
     </div>
   );
