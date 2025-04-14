@@ -29,7 +29,6 @@ function BeeOneAIChat() {
   const [input, setInput] = useState('');
   const [memory, setMemory] = useState([]);
   const [language, setLanguage] = useState('en-US');
-  const [voiceInputEnabled, setVoiceInputEnabled] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const chatEndRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -56,24 +55,25 @@ function BeeOneAIChat() {
     recognition.interimResults = false;
     recognition.lang = language;
 
-recognition.onresult = (event) => {
-  const transcript = event.results[event.resultIndex][0].transcript;
-  setInput('');
-  
-  const userMsg = { type: 'text', content: transcript, isUser: true };
-  const newMemory = extractKeywords(transcript);
-  const updatedMemory = Array.from(new Set([...memory, ...newMemory]));
-  setMemory(updatedMemory);
+    recognition.onresult = (event) => {
+      const transcript = event.results[event.resultIndex][0].transcript;
+      const userMsg = { type: 'text', content: transcript, isUser: true };
+      const newMemory = extractKeywords(transcript);
+      const updatedMemory = Array.from(new Set([...memory, ...newMemory]));
+      setMemory(updatedMemory);
 
-  const replyText = aiCharacters.Nova.response(transcript, updatedMemory);
-  const novaMsg = { type: 'text', content: replyText, isUser: false };
+      const replyText = aiCharacters.Nova.response(transcript, updatedMemory);
+      const novaMsg = { type: 'text', content: replyText, isUser: false };
 
-  setMessages((prev) => [...prev, userMsg, novaMsg]);
-  speak(replyText);
-};
+      setMessages((prev) => [...prev, userMsg, novaMsg]);
+      speak(replyText);
+      setInput('');
+    };
+
     recognition.onend = () => {
       if (isListening) recognition.start();
     };
+
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
       setIsListening(false);
@@ -90,21 +90,6 @@ recognition.onresult = (event) => {
   const extractKeywords = (text) => {
     const keywords = ['sad', 'father', 'career', 'football'];
     return keywords.filter((word) => text.toLowerCase().includes(word));
-  };
-
-  const handleSend = () => {
-    if (!input.trim()) return;
-    const userMsg = { type: 'text', content: input, isUser: true };
-    const newMemory = extractKeywords(input);
-    const updatedMemory = Array.from(new Set([...memory, ...newMemory]));
-    setMemory(updatedMemory);
-
-    const replyText = aiCharacters.Nova.response(input, updatedMemory);
-    const novaMsg = { type: 'text', content: replyText, isUser: false };
-
-    setMessages((prev) => [...prev, userMsg, novaMsg]);
-    speak(replyText);
-    setInput('');
   };
 
   const speak = (text) => {
@@ -137,7 +122,17 @@ recognition.onresult = (event) => {
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              handleSend();
+              const userMsg = { type: 'text', content: input, isUser: true };
+              const newMemory = extractKeywords(input);
+              const updatedMemory = Array.from(new Set([...memory, ...newMemory]));
+              setMemory(updatedMemory);
+
+              const replyText = aiCharacters.Nova.response(input, updatedMemory);
+              const novaMsg = { type: 'text', content: replyText, isUser: false };
+
+              setMessages((prev) => [...prev, userMsg, novaMsg]);
+              speak(replyText);
+              setInput('');
             }
           }}
           placeholder="Type or speak your message..."
@@ -154,28 +149,20 @@ recognition.onresult = (event) => {
         />
 
         <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
- <button
-  onClick={() => {
-    const next = !voiceInputEnabled;
-    setVoiceInputEnabled(next);
-    if (next) {
-      recognitionRef.current?.start();
-      setIsListening(true);
-    } else {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-    }
-  }}
-  style={{
-    padding: '0.5rem 1rem',
-    background: voiceInputEnabled ? '#ffc107' : '#6c757d',
-    color: 'white',
-    border: 'none',
-    borderRadius: '0.5rem',
-  }}
->
-  🎛️ Voice {voiceInputEnabled ? 'On' : 'Off'}
-</button>
+          <button
+            onClick={() => {
+              if (isListening) {
+                recognitionRef.current?.stop();
+                setIsListening(false);
+              } else {
+                recognitionRef.current?.start();
+                setIsListening(true);
+              }
+            }}
+            style={{ padding: '0.5rem 1rem', background: isListening ? '#dc3545' : '#28a745', color: 'white', border: 'none', borderRadius: '0.5rem' }}
+          >
+            {isListening ? '🔇 Stop Listening' : '🎤 Speak'}
+          </button>
         </div>
       </div>
 
@@ -191,5 +178,4 @@ recognition.onresult = (event) => {
 }
 
 export default BeeOneAIChat;
-
 
