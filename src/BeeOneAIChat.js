@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+const [input, setInput] = useState('');
+const [voiceInputEnabled, setVoiceInputEnabled] = useState(true);
+
+const [isListening, setIsListening] = useState(false);
 
 const aiCharacters = {
   Nova: {
@@ -81,20 +85,45 @@ function BeeOneAIChat() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, memory]);
 
-  useEffect(() => {
-    if (!('webkitSpeechRecognition' in window)) return;
-    const recognition = new webkitSpeechRecognition();
-    recognition.lang = language;
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.onresult = (event) => {
-      const speech = event.results[0][0].transcript;
-      setInput(speech);
-    };
-    document.getElementById('mic-btn')?.addEventListener('click', () => {
-      if (voiceInputEnabled) recognition.start();
-    });
-  }, [language, voiceInputEnabled]);
+useEffect(() => {
+  if (!('webkitSpeechRecognition' in window)) return;
+
+  const recognition = new webkitSpeechRecognition();
+  recognition.lang = language;
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onresult = (event) => {
+    const speech = event.results[0][0].transcript;
+    setInput(speech);
+    setIsListening(false); // turn off after speech captured
+  };
+
+  recognition.onend = () => {
+    setIsListening(false); // fallback if mic ends
+  };
+
+  const handleMicClick = () => {
+    if (voiceInputEnabled) {
+      if (isListening) {
+        recognition.stop();
+      } else {
+        recognition.start();
+      }
+      setIsListening(!isListening);
+    }
+  };
+
+  const micButton = document.getElementById('mic-btn');
+  if (micButton) {
+    micButton.addEventListener('click', handleMicClick);
+  }
+
+  return () => {
+    if (micButton) micButton.removeEventListener('click', handleMicClick);
+    recognition.stop();
+  };
+}, [language, voiceInputEnabled, isListening]);
 
   const handlePaste = (event) => {
     const items = event.clipboardData?.items;
@@ -188,9 +217,14 @@ function BeeOneAIChat() {
         <button onClick={handleSend} className="px-4 py-2 bg-blue-500 text-white rounded">
           Send
         </button>
-        <button id="mic-btn" className="px-4 py-2 bg-green-500 text-white rounded">
-          🎤 Speak
-        </button>
+       <button
+  id="mic-btn"
+  className={`px-4 py-2 ${
+    isListening ? 'bg-red-500' : 'bg-green-500'
+  } text-white rounded`}
+>
+  🎤 {isListening ? 'Listening...' : 'Speak'}
+</button>
         <button
           onClick={() => setVoiceInputEnabled(!voiceInputEnabled)}
           className={`px-4 py-2 ${voiceInputEnabled ? 'bg-yellow-500' : 'bg-gray-400'} text-white rounded`}
