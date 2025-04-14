@@ -13,11 +13,11 @@ const aiCharacters = {
   },
  
 
-const ChatMessage = ({ message }) => {
+function ChatMessage({ message }) {
   if (message.type === 'text') return <div className="my-2">{message.content}</div>;
   if (message.type === 'image') return <img src={message.content} alt="Shared" className="my-2 rounded" />;
   return null;
-};
+}
 
 function BeeOneAIChat() {
   const [messages, setMessages] = useState(() => {
