@@ -1,8 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-const [input, setInput] = useState('');
-const [voiceInputEnabled, setVoiceInputEnabled] = useState(true);
-
-const [isListening, setIsListening] = useState(false);
 
 const aiCharacters = {
   Nova: {
@@ -59,24 +55,20 @@ const ChatMessage = ({ message }) => {
 
 function BeeOneAIChat() {
   const [messages, setMessages] = useState(() => {
-  const saved = JSON.parse(localStorage.getItem('beeMessages')) || [];
+    const saved = JSON.parse(localStorage.getItem('beeMessages')) || [];
+    if (saved.length > 0 && saved.every(m => typeof m.content === 'string' && m.content.startsWith('New: Message'))) {
+      localStorage.removeItem('beeMessages');
+      return [];
+    }
+    return saved;
+  });
 
-  // 🔍 If all messages look like test junk, clear them
-  if (
-    saved.length > 0 &&
-    saved.every(m => typeof m.content === 'string' && m.content.startsWith('New: Message'))
-  ) {
-    localStorage.removeItem('beeMessages');
-    return [];
-  }
-
-  return saved;
-});
   const [input, setInput] = useState('');
   const [activeAIs, setActiveAIs] = useState(['Nova']);
   const [memory, setMemory] = useState(() => JSON.parse(localStorage.getItem('beeMemory')) || []);
   const [language, setLanguage] = useState('en-US');
   const [voiceInputEnabled, setVoiceInputEnabled] = useState(true);
+  const [isListening, setIsListening] = useState(false);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -85,77 +77,47 @@ function BeeOneAIChat() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, memory]);
 
-useEffect(() => {
-  if (!('webkitSpeechRecognition' in window)) return;
+  useEffect(() => {
+    if (!('webkitSpeechRecognition' in window)) return;
 
-  const recognitionRef = { current: null };
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = language;
+    recognition.continuous = true;
+    recognition.interimResults = false;
 
-  const recognition = new webkitSpeechRecognition();
-  recognition.lang = language;
-  recognition.continuous = true; // ✅ keep listening
-  recognition.interimResults = false;
+    let shouldContinue = false;
 
-  recognition.onstart = () => {
-    setIsListening(true);
-  };
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event) => {
+      const transcript = event.results[event.resultIndex][0].transcript;
+      setInput(prev => prev + ' ' + transcript);
+    };
+    recognition.onend = () => {
+      if (shouldContinue) recognition.start();
+      else setIsListening(false);
+    };
 
-  recognition.onresult = (event) => {
-    const transcript = event.results[event.resultIndex][0].transcript;
-    setInput(prev => prev + ' ' + transcript); // append speech
-  };
+    const handleMicClick = () => {
+      if (!voiceInputEnabled) return;
 
-  recognition.onend = () => {
-    if (isListening) {
-      recognition.start(); // only restart if toggle is still ON
-    } else {
-      setIsListening(false); // stop fully
-    }
-  };
+      if (isListening) {
+        shouldContinue = false;
+        recognition.stop();
+      } else {
+        shouldContinue = true;
+        recognition.start();
+      }
+    };
 
-  recognitionRef.current = recognition;
+    const micBtn = document.getElementById('mic-btn');
+    if (micBtn) micBtn.addEventListener('click', handleMicClick);
 
-  const handleMicClick = () => {
-    if (!voiceInputEnabled) return;
-
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      recognitionRef.current.start();
-      setIsListening(true);
-    }
-  };
-
-  const micBtn = document.getElementById('mic-btn');
-  if (micBtn) micBtn.addEventListener('click', handleMicClick);
-
-  return () => {
-    if (micBtn) micBtn.removeEventListener('click', handleMicClick);
-    recognitionRef.current?.stop();
-  };
-}, [language, voiceInputEnabled, isListening]);
-  };
-
-  const handleMicClick = () => {
-    if (!voiceInputEnabled) return;
-
-    if (isListening) {
-      recognition.stop(); // stop manually
-      setIsListening(false);
-    } else {
-      recognition.start(); // start manually
-      setIsListening(true);
-    }
-  };
-
-  const micBtn = document.getElementById('mic-btn');
-  if (micBtn) micBtn.addEventListener('click', handleMicClick);
-
-  return () => {
-    if (micBtn) micBtn.removeEventListener('click', handleMicClick);
-    recognition.stop();
-  };
-}, [language, voiceInputEnabled, isListening]);
+    return () => {
+      if (micBtn) micBtn.removeEventListener('click', handleMicClick);
+      shouldContinue = false;
+      recognition.stop();
+    };
+  }, [language, voiceInputEnabled, isListening]);
 
   const handlePaste = (event) => {
     const items = event.clipboardData?.items;
@@ -166,9 +128,9 @@ useEffect(() => {
         const reader = new FileReader();
         reader.onload = (e) => {
           const content = e.target.result;
-          const replies = activeAIs.map((ai) => aiCharacters[ai].response('', memory));
+          const replies = activeAIs.map(ai => aiCharacters[ai].response('', memory));
           const responses = replies.map(r => ({ type: 'text', content: r }));
-          setMessages((prev) => [...prev, { type: 'image', content }, ...responses]);
+          setMessages(prev => [...prev, { type: 'image', content }, ...responses]);
           replies.forEach(speak);
         };
         reader.readAsDataURL(blob);
@@ -185,10 +147,10 @@ useEffect(() => {
     if (!input.trim()) return;
     const userMsg = { type: 'text', content: input };
     const newMemory = extractKeywords(input);
-    if (newMemory.length) setMemory((prev) => Array.from(new Set([...prev, ...newMemory])));
+    if (newMemory.length) setMemory(prev => Array.from(new Set([...prev, ...newMemory])));
     const aiReplies = activeAIs.map(ai => aiCharacters[ai].response(input, memory));
     const aiMsgs = aiReplies.map(reply => ({ type: 'text', content: reply }));
-    setMessages((prev) => [...prev, userMsg, ...aiMsgs]);
+    setMessages(prev => [...prev, userMsg, ...aiMsgs]);
     aiReplies.forEach(speak);
     setInput('');
   };
@@ -201,8 +163,10 @@ useEffect(() => {
   };
 
   const toggleAI = (name) => {
-    setActiveAIs((prev) =>
-      prev.includes(name) ? prev.filter(n => n !== name) : [...(prev.length === 2 ? prev.slice(1) : prev), name]
+    setActiveAIs(prev =>
+      prev.includes(name)
+        ? prev.filter(n => n !== name)
+        : [...(prev.length === 2 ? prev.slice(1) : prev), name]
     );
   };
 
@@ -225,7 +189,7 @@ useEffect(() => {
       <div className="mb-4">🌐 <strong>Language:</strong> 🇺🇸 English</div>
 
       <div className="mb-4">
-        {activeAIs.map((ai) => (
+        {activeAIs.map(ai => (
           <div key={ai} className="font-bold">{aiCharacters[ai].intro}</div>
         ))}
       </div>
@@ -249,12 +213,12 @@ useEffect(() => {
         <button onClick={handleSend} className="px-4 py-2 bg-blue-500 text-white rounded">
           Send
         </button>
-       <button
-  id="mic-btn"
-  className={`px-4 py-2 ${isListening ? 'bg-red-500' : 'bg-green-500'} text-white rounded`}
->
-  🎤 {isListening ? 'Listening...' : 'Speak'}
-</button>
+        <button
+          id="mic-btn"
+          className={`px-4 py-2 ${isListening ? 'bg-red-500' : 'bg-green-500'} text-white rounded`}
+        >
+          🎤 {isListening ? 'Listening...' : 'Speak'}
+        </button>
         <button
           onClick={() => setVoiceInputEnabled(!voiceInputEnabled)}
           className={`px-4 py-2 ${voiceInputEnabled ? 'bg-yellow-500' : 'bg-gray-400'} text-white rounded`}
