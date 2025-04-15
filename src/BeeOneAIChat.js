@@ -167,6 +167,42 @@ function BeeOneAIChat() {
     }
   };
 
+// 🔊 Add voice selector here:
+const voiceSelector = (
+  <div style={{ position: 'fixed', top: 10, left: 220, zIndex: 1000, background: '#fff', padding: 10, border: '1px solid #ccc', borderRadius: '8px' }}>
+    <label style={{ marginRight: 8 }}>Voice:</label>
+    <select
+      value={novaVoiceName}
+      onChange={(e) => {
+        setNovaVoiceName(e.target.value);
+        localStorage.setItem('novaVoice', e.target.value);
+      }}
+      style={{ padding: '4px 8px' }}
+    >
+      <option value="">-- Select Nova's Voice --</option>
+      {availableVoices.map((v, i) => (
+        <option key={i} value={v.name}>{v.name} ({v.lang})</option>
+      ))}
+    </select>
+
+    <button
+      onClick={() => {
+        const v = availableVoices.find(v => v.name === novaVoiceName);
+        if (v) {
+          const u = new SpeechSynthesisUtterance("Hi! I’m Nova. This is how I sound.");
+          u.voice = v;
+          window.speechSynthesis.speak(u);
+        }
+      }}
+      style={{ marginLeft: 10, padding: '4px 10px' }}
+    >
+      Preview
+    </button>
+  </div>
+);
+
+
+  
 return (
   <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
     <div style={{ width: '200px', overflowY: 'auto', background: '#f9f9f9', padding: '10px', borderRight: '1px solid #ccc' }}>
@@ -196,17 +232,22 @@ return (
       />
     </div>
 
-    <div style={{ width: '300px', background: '#f0f0f0', padding: '10px', borderLeft: '1px solid #ccc' }}>
-      <video
-        ref={videoRef}
-        src="/videos/NovaTalk1.mp4"
-        autoPlay
-        muted
-        loop
-        style={{ width: '100%', borderRadius: '12px' }}
-      />
-    </div>
-
+    <div style={{ width: '300px', background: '#f0f0f0', padding: '10px', borderLeft: '1px solid #ccc', display: 'flex', justifyContent: 'center' }}>
+  <video
+    ref={videoRef}
+    src="/videos/NovaTalk1.mp4"
+    autoPlay
+    muted
+    loop
+    style={{
+      width: '150px',
+      height: '200px',
+      borderRadius: '12px',
+      opacity: isSpeaking ? 1 : 0.15,
+      transition: 'opacity 0.3s ease-in-out'
+    }}
+  />
+</div>
     {selectedImage && (
       <div onClick={() => setSelectedImage(null)} style={{
         position: 'fixed',
