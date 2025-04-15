@@ -175,7 +175,7 @@ function BeeOneAIChat() {
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder="Type your message..."
-          style={{ width: '100%', padding: '10px', borderTop: '1px solid #ccc' }}
+          style={{ width: '95%', height: '48px', padding: '12px 16px', fontSize: '16px', border: '1px solid #ccc', borderRadius: '8px', margin: '0 auto 10px auto', display: 'block' }}}
         />
       </div>
 
