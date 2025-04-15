@@ -83,7 +83,10 @@ function BeeOneAIChat() {
     };
 
     if (synth.getVoices().length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => speakWithVoice();
+      window.speechSynthesis.onvoiceschanged = () => {
+  window.speechSynthesis.onvoiceschanged = null; // avoid double call
+  speakWithVoice();
+};
     } else {
       speakWithVoice();
     }
@@ -245,7 +248,4 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
-
-
-
 
