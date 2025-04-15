@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react'; 
 
+const novaImages = [
+  '/avatars/Nova.png',
+  '/avatars/Nova1.png',
+  '/avatars/Nova2.png',
+  '/avatars/Nova3.png',
+  '/avatars/Nova4.png',
+  '/avatars/Nova5.png',
+  '/avatars/Nova6.png'
+];
+
 function ChatMessage({ message }) {
   return (
     <div className={`my-2 ${message.isUser ? 'text-right text-blue-600' : 'text-left text-gray-800'}`}>
@@ -14,6 +24,8 @@ function BeeOneAIChat() {
   const [userName, setUserName] = useState('');
   const [setupStage, setSetupStage] = useState('start');
   const [memory, setMemory] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const videoRef = useRef(null);
 
   useEffect(() => {
     const identity = JSON.parse(localStorage.getItem("novaIdentity"));
@@ -31,6 +43,21 @@ function BeeOneAIChat() {
   const addMessage = (sender, text) => {
     const newMessage = { type: 'text', content: text, isUser: sender !== "Nova" ? true : false };
     setMessages(prev => [...prev, newMessage]);
+    if (sender === "Nova") speak(text);
+  };
+
+  const speak = (text) => {
+    if (!window.speechSynthesis) return;
+    const synth = window.speechSynthesis;
+    const voices = synth.getVoices();
+    const selectedVoice = voices.find(v => v.name.includes("Libby") || (v.name.includes("English") && v.lang === 'en-GB')) || voices[0];
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.voice = selectedVoice;
+    utter.lang = selectedVoice?.lang || 'en-GB';
+    utter.rate = 1;
+    utter.pitch = 1;
+    synth.cancel();
+    synth.speak(utter);
   };
 
   const handleUserMessage = (text) => {
@@ -117,19 +144,66 @@ function BeeOneAIChat() {
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
-      <div style={{ height: '70vh', overflowY: 'auto', border: '1px solid #ccc', padding: '10px' }}>
-        {messages.map((msg, index) => (
-          <ChatMessage key={index} message={msg} />
+    <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
+
+      {/* Left Panel - Nova Images */}
+      <div style={{ width: '200px', overflowY: 'auto', background: '#f9f9f9', padding: '10px', borderRight: '1px solid #ccc' }}>
+        {novaImages.map((img, idx) => (
+          <img
+            key={idx}
+            src={img}
+            alt={`Nova ${idx}`}
+            style={{ width: '100%', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer' }}
+            onClick={() => setSelectedImage(img)}
+          />
         ))}
       </div>
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyPress={handleKeyPress}
-        placeholder="Type your message..."
-        style={{ width: '100%', padding: '10px', marginTop: '10px' }}
-      />
+
+      {/* Center Panel - Chat */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
+          {messages.map((msg, index) => (
+            <ChatMessage key={index} message={msg} />
+          ))}
+        </div>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Type your message..."
+          style={{ width: '100%', padding: '10px', borderTop: '1px solid #ccc' }}
+        />
+      </div>
+
+      {/* Right Panel - Nova Video */}
+      <div style={{ width: '300px', background: '#f0f0f0', padding: '10px', borderLeft: '1px solid #ccc' }}>
+        <video
+          ref={videoRef}
+          src="/videos/nova_idle.mp4"
+          autoPlay
+          muted
+          loop
+          style={{ width: '100%', borderRadius: '12px' }}
+        />
+      </div>
+
+      {/* Modal for Expanded Image */}
+      {selectedImage && (
+        <div onClick={() => setSelectedImage(null)} style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <img src={selectedImage} alt="Expanded Nova" style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: '12px' }} />
+        </div>
+      )}
     </div>
   );
 }
