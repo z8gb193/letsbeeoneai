@@ -204,79 +204,35 @@ const voiceSelector = (
 return (
   <>
     {voiceSelector}
+
     <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      <div style={{ width: '200px', overflowY: 'auto', background: '#f9f9f9', padding: '10px', borderRight: '1px solid #ccc' }}>
-        {novaImages.map((img, idx) => (
-          <img
-            key={idx}
-            src={img}
-            alt={`Nova ${idx}`}
-            style={{ width: '100%', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer' }}
-            onClick={() => setSelectedImage(img)}
-          />
-        ))}
-      </div>
-
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
-        {messages.map((msg, index) => (
-          <ChatMessage key={index} message={msg} />
-        ))}
-      </div>
-   <input
-  value={input}
-  onChange={(e) => setInput(e.target.value)}
-  onKeyPress={handleKeyPress}
-  placeholder="Type your message..."
-  style={{
-    width: '90%',
-    height: '120px',
-    padding: '20px',
-    fontSize: '18px',
-    border: '1px solid #ccc',
-    borderRadius: '8px',
-    margin: '20px auto',
-    display: 'block'
-  }}
-/>
-
-        
+      {/* Left panel (images), center chat, right video */}
     </div>
 
-    <div style={{ width: '300px', background: '#f0f0f0', padding: '10px', borderLeft: '1px solid #ccc', display: 'flex', justifyContent: 'center' }}>
-  <video
-    ref={videoRef}
-    src="/videos/NovaTalk1.mp4"
-    autoPlay
-    muted
-    loop
-    style={{
-      width: '150px',
-      height: '200px',
-      borderRadius: '12px',
-      opacity: isSpeaking ? 1 : 0.15,
-      transition: 'opacity 0.3s ease-in-out'
-    }}
-  />
-</div>
     {selectedImage && (
-      <div onClick={() => setSelectedImage(null)} style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000
-      }}>
-        <img src={selectedImage} alt="Expanded Nova" style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: '12px' }} />
+      <div
+        onClick={() => setSelectedImage(null)}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}
+      >
+        <img
+          src={selectedImage}
+          alt="Expanded Nova"
+          style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: '12px' }}
+        />
       </div>
-   )}
+    )}
   </>
 );
-}
 
 export default BeeOneAIChat;
