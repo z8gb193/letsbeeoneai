@@ -61,15 +61,19 @@ function BeeOneAIChat() {
       return;
     }
 
-    console.log('Available voices:', voices.map(v => `${v.name} [${v.lang}]`));
+    // Force fixed voice only
+    const selectedVoice = voices.find(v => v.name === 'Google UK English Female');
 
-    const selectedVoice = voices.find(v => v.name === 'Google UK English Female') || voices[0];
+    if (!selectedVoice) {
+      console.warn('Google UK English Female voice not available.');
+      return;
+    }
 
-    console.log('Selected voice:', selectedVoice?.name);
+    console.log('Using voice:', selectedVoice.name);
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.voice = selectedVoice;
-    utterance.lang = selectedVoice?.lang || 'en-US';
+    utterance.lang = selectedVoice.lang;
     utterance.rate = 1;
     utterance.pitch = 1;
     utterance.onerror = (e) => console.error('Speech error:', e);
@@ -261,3 +265,4 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
+
