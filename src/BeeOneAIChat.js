@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const novaImages = [
   '/avatars/Nova.png',
+  '/avatars/Nova1.png',
   '/avatars/Nova2.png',
   '/avatars/Nova3.png',
   '/avatars/Nova4.png',
@@ -16,6 +17,12 @@ function ChatMessage({ message }) {
     </div>
   );
 }
+      
+      {message.content}
+    </div>
+  );
+}
+
 function BeeOneAIChat() {
   const [availableVoices, setAvailableVoices] = useState([]);
   const [novaVoiceName, setNovaVoiceName] = useState(localStorage.getItem('novaVoice') || '');
@@ -261,4 +268,5 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
+
 
