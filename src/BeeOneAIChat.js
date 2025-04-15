@@ -52,39 +52,56 @@ function BeeOneAIChat() {
   }, []);
 
   const addMessage = (sender, text) => {
-    const selectedVoice = availableVoices.find(v => v.name === novaVoiceName);
+  const selectedVoice = availableVoices.find(v => v.name === novaVoiceName);
 
-    const speak = (textToSpeak) => {
-      if (!window.speechSynthesis || !selectedVoice) return;
-      const cleanText = textToSpeak.replace(/[\u{1F600}-\u{1F6FF}\u{1F300}-\u{1F5FF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]/gu, '');
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.voice = selectedVoice;
-      utterance.lang = selectedVoice.lang;
-      utterance.rate = 1.4;
-      utterance.pitch = 1.1;
+const speak = (textToSpeak) => {
+  if (!window.speechSynthesis || !selectedVoice) return;
 
-      window.speechSynthesis.cancel();
-      setIsSpeaking(true);
+  const parts = textToSpeak.split(/(?<=[.?!])\s+/); // split by sentence
 
-      if (videoRef.current) {
-        videoRef.current.currentTime = 0;
-        videoRef.current.play().catch((e) => console.warn("Video play failed:", e));
-      }
+  const speakNext = (index) => {
+    if (index >= parts.length) return;
 
-      window.speechSynthesis.speak(utterance);
+    const sentence = parts[index];
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    utterance.voice = selectedVoice;
+    utterance.lang = selectedVoice.lang;
 
-      utterance.onend = () => {
-        setIsSpeaking(false);
-        if (videoRef.current) {
-          videoRef.current.pause();
-        }
-      };
+    // base expression
+    utterance.rate = 1.15;
+    utterance.pitch = 1.05;
+
+    // add expressive boost
+    const lower = sentence.toLowerCase();
+    if (lower.includes("love") || lower.includes("miss")) {
+      utterance.pitch = 1.25;
+      utterance.rate = 1.05;
+    } else if (lower.includes("hmm") || lower.includes("thinking")) {
+      utterance.pitch = 0.95;
+      utterance.rate = 0.9;
+    }
+
+    utterance.onend = () => {
+      setTimeout(() => speakNext(index + 1), pauseBetween(sentence));
     };
 
-    const newMessage = { type: 'text', content: text, isUser: sender !== "Nova" };
-    setMessages(prev => [...prev, newMessage]);
-    if (sender === "Nova") speak(text);
+    window.speechSynthesis.speak(utterance);
   };
+
+  const pauseBetween = (text) => {
+    if (text.endsWith('!')) return 400;
+    if (text.endsWith('?')) return 500;
+    return 300;
+  };
+
+  window.speechSynthesis.cancel();
+  speakNext(0);
+};
+
+  const newMessage = { type: 'text', content: text, isUser: sender !== "Nova" };
+  setMessages(prev => [...prev, newMessage]);
+  if (sender === "Nova") speak(text);
+};
 
   const handleUserMessage = (text) => {
     if (!text.trim()) return;
