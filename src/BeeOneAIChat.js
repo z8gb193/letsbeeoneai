@@ -1,20 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-
-const aiCharacters = {
-  Nova: {
-    name: 'Nova',
-    avatar: '/avatars/Nova.png',
-    gallery: [
-      '/avatars/Nova.png',
-      '/avatars/Nova1.png',
-      '/avatars/Nova2.png',
-      '/avatars/Nova3.png',
-      '/avatars/Nova4.png',
-      '/avatars/Nova5.png',
-      '/avatars/Nova6.png',
-    ]
-  },
-};
+import React, { useState, useEffect, useRef } from 'react'; 
 
 function ChatMessage({ message }) {
   return (
@@ -25,170 +9,130 @@ function ChatMessage({ message }) {
 }
 
 function BeeOneAIChat() {
-  const [accessGranted, setAccessGranted] = useState(false);
-  const [userName, setUserName] = useState("");
-  const [chatHistory, setChatHistory] = useState([]);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [micStatus, setMicStatus] = useState("");
-  const [attemptsLeft, setAttemptsLeft] = useState(2);
-  const voiceWords = ["sunflower", "echo", "crystal", "mirror", "nebula", "horizon", "flame", "ocean"];
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [userName, setUserName] = useState('');
+  const [setupStage, setSetupStage] = useState('start');
   const [memory, setMemory] = useState([]);
-  const [language] = useState('en-GB');
-  const [isListening, setIsListening] = useState(false);
-  const [modalImage, setModalImage] = useState(null);
-  const chatEndRef = useRef(null);
-  const recognitionRef = useRef(null);
 
   useEffect(() => {
     const identity = JSON.parse(localStorage.getItem("novaIdentity"));
 
-    if (!identity) {
-  const firstName = prompt("Hi, I’m Nova 💛 What’s your first name?");
-  const age = prompt("How old are you?");
-  const motherName = prompt("What’s your mother’s first name?");
-  const petName = prompt("What’s your pet’s name? (Leave blank if none)");
-  const codeWord = prompt("Give me a code word you can remember. 📌 Be sure to write it down — you’ll need it next time to access Nova!");
-
-  if (!firstName || !age || !motherName || !codeWord) {
-    alert("All fields except pet name are required to continue.");
-    return;
-  }
-
-  const profile = {
-    firstName: firstName.trim(),
-    age: age.trim(),
-    motherName: motherName.trim(),
-    petName: petName?.trim() || "none",
-    codeWord: codeWord.trim()
-  };
-
-  localStorage.setItem("novaIdentity", JSON.stringify(profile));
-  localStorage.setItem(`novaMemory-${profile.firstName}`, JSON.stringify([]));
-  setUserName(profile.firstName);
-  setChatHistory([]);
-
-  // ✅ Redirect to full version after setup complete
-  window.location.href = `https://letsbeeone-deploy-2024.netlify.app/?user=${encodeURIComponent(profile.codeWord)}`;
-  return;
-}
-
-      const profile = {
-        firstName: firstName.trim(),
-        age: age.trim(),
-        motherName: motherName.trim(),
-        petName: petName?.trim() || "none",
-        codeWord: codeWord.trim()
-      };
-
-      localStorage.setItem("novaIdentity", JSON.stringify(profile));
-      localStorage.setItem(`novaMemory-${profile.firstName}`, JSON.stringify([]));
-      setUserName(profile.firstName);
-      setChatHistory([]);
-      setAccessGranted(true);
+    if (identity) {
+      setUserName(identity.firstName);
+      setSetupStage("verify");
+      addMessage("Nova", "Hey! What’s the codeword you gave me last time?");
     } else {
-      const enteredCode = prompt("Welcome back 👋 Please enter your code word to continue:");
-
-   if (identity.codeWord.toLowerCase() === enteredCode?.trim().toLowerCase()) {
-  const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
-  setUserName(identity.firstName);
-  setAccessGranted(true);
-
-  if (savedHistory.length === 0) {
-    const novaMsg = { type: 'text', content: `Welcome back, ${identity.firstName} 💛 I'm so glad you're here again.`, isUser: false };
-    setMessages([novaMsg]);
-    setChatHistory([novaMsg]);
-    localStorage.setItem(`novaMemory-${identity.firstName}`, JSON.stringify([novaMsg]));
-  } else {
-    setMessages(savedHistory);
-    setChatHistory(savedHistory);
-  }
-}
-      } else {
-        alert("Hmm... that didn’t sound quite right. Here’s one clue: it starts with \"" + identity.codeWord[0].toUpperCase() + "\"");
-        const secondTry = prompt("Try again. What’s your code word?");
-        if (identity.codeWord.toLowerCase() === secondTry?.trim().toLowerCase()) {
-          const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
-          setUserName(identity.firstName);
-          setChatHistory(savedHistory);
-          setAccessGranted(true);
-        } else {
-          alert("🚫 Locked out. Please wait 2 minutes before trying again.\nIf you're having trouble remembering your code word, email: deanopatent@hotmail.co.uk");
-          setTimeout(() => {
-            window.location.reload();
-          }, 120000); // 2 minutes lockout
-          return;
-        }
-      }
+      setSetupStage("askName");
+      addMessage("Nova", "Hi! I’m Nova 💛 What’s your name?");
     }
   }, []);
 
- useEffect(() => {
-  const identity = JSON.parse(localStorage.getItem("novaIdentity"));
+  const addMessage = (sender, text) => {
+    const newMessage = { type: 'text', content: text, isUser: sender !== "Nova" ? true : false };
+    setMessages(prev => [...prev, newMessage]);
+  };
 
-  if (!identity) {
-    const firstName = prompt("Hi, I’m Nova 💛 What’s your first name?");
-    const age = prompt("How old are you?");
-    const motherName = prompt("What’s your mother’s first name?");
-    const petName = prompt("What’s your pet’s name? (Leave blank if none)");
-    const codeWord = prompt("Give me a code word you can remember. 📌 Be sure to write it down — you’ll need it next time to access Nova!");
+  const handleUserMessage = (text) => {
+    if (!text.trim()) return;
 
-    if (!firstName || !age || !motherName || !codeWord) {
-      alert("All fields except pet name are required to continue.");
+    addMessage("user", text);
+
+    if (setupStage === "askName") {
+      setUserName(text.trim());
+      setSetupStage("askAge");
+      addMessage("Nova", "Nice to meet you! How old are you?");
       return;
     }
 
-    const profile = {
-      firstName: firstName.trim(),
-      age: age.trim(),
-      motherName: motherName.trim(),
-      petName: petName?.trim() || "none",
-      codeWord: codeWord.trim()
-    };
-
-    localStorage.setItem("novaIdentity", JSON.stringify(profile));
-    localStorage.setItem(`novaMemory-${profile.firstName}`, JSON.stringify([]));
-    setUserName(profile.firstName);
-    setChatHistory([]);
-    setAccessGranted(true);
-
-    window.location.href = `https://letsbeeone-deploy-2024.netlify.app/?user=${encodeURIComponent(profile.codeWord)}`;
-    return;
-  }
-
-  // ✅ Now we are in return-visit flow
-  const enteredCode = prompt("Welcome back 👋 Please enter your code word to continue:");
-
-  if (identity.codeWord.toLowerCase() === enteredCode?.trim().toLowerCase()) {
-    const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
-    setUserName(identity.firstName);
-    setAccessGranted(true);
-
-    if (savedHistory.length === 0) {
-      const novaMsg = { type: 'text', content: `Welcome back, ${identity.firstName} 💛 I'm so glad you're here again.`, isUser: false };
-      setMessages([novaMsg]);
-      setChatHistory([novaMsg]);
-      localStorage.setItem(`novaMemory-${identity.firstName}`, JSON.stringify([novaMsg]));
-    } else {
-      setMessages(savedHistory);
-      setChatHistory(savedHistory);
+    if (setupStage === "askAge") {
+      setSetupStage("askMother");
+      addMessage("Nova", "What’s your mother’s first name?");
+      return;
     }
-  } else {
-    alert("Hmm... that didn’t sound quite right. Here’s one clue: it starts with \"" + identity.codeWord[0].toUpperCase() + "\"");
-    const secondTry = prompt("Try again. What’s your code word?");
-    if (identity.codeWord.toLowerCase() === secondTry?.trim().toLowerCase()) {
-      const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
-      setUserName(identity.firstName);
-      setAccessGranted(true);
-      setMessages(savedHistory);
-      setChatHistory(savedHistory);
-    } else {
-      alert("🚫 Locked out. Please wait 2 minutes before trying again.\nIf you're having trouble remembering your code word, email: deanopatent@hotmail.co.uk");
-      setTimeout(() => {
-        window.location.reload();
-      }, 120000);
+
+    if (setupStage === "askMother") {
+      setSetupStage("askPet");
+      addMessage("Nova", "What’s your pet’s name? (or say 'none')");
+      return;
     }
-  }
-}, []);
+
+    if (setupStage === "askPet") {
+      setSetupStage("askCodeword");
+      addMessage("Nova", "Now pick a codeword I’ll remember you by forever 💾. Write it down!");
+      return;
+    }
+
+    if (setupStage === "askCodeword") {
+      const identity = {
+        firstName: userName,
+        age: "?",
+        motherName: "?",
+        petName: "?",
+        codeWord: text.trim()
+      };
+      localStorage.setItem("novaIdentity", JSON.stringify(identity));
+      setSetupStage("complete");
+      addMessage("Nova", `Got it, ${userName}. Your codeword is saved! Let’s begin 💛`);
+      return;
+    }
+
+    if (setupStage === "verify") {
+      const saved = JSON.parse(localStorage.getItem("novaIdentity"));
+      if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
+        setSetupStage("complete");
+        addMessage("Nova", `Access granted 💛 Welcome back, ${saved.firstName}`);
+      } else {
+        addMessage("Nova", "Hmm... that’s not it. Want to try again?");
+      }
+      return;
+    }
+
+    // Normal conversation after setup
+    fetchReplyFromBackend("nova", text, memory, userName, "female").then(replyText => {
+      addMessage("Nova", replyText);
+    });
+  };
+
+  const fetchReplyFromBackend = async (character, message, memory, userName = "Friend", userGender = "unspecified") => {
+    try {
+      const response = await fetch("https://beeoneai-backend.onrender.com/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ character, message, memory, name: userName, userId: "default", gender: userGender })
+      });
+      const data = await response.json();
+      return data.reply || "Hmm... I didn’t quite get that.";
+    } catch (error) {
+      console.error("Backend error:", error);
+      return "Hmm... Nova couldn’t connect just now.";
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleUserMessage(input);
+      setInput('');
+    }
+  };
+
+  return (
+    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+      <div style={{ height: '70vh', overflowY: 'auto', border: '1px solid #ccc', padding: '10px' }}>
+        {messages.map((msg, index) => (
+          <ChatMessage key={index} message={msg} />
+        ))}
+      </div>
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyPress={handleKeyPress}
+        placeholder="Type your message..."
+        style={{ width: '100%', padding: '10px', marginTop: '10px' }}
+      />
+    </div>
+  );
+}
+
 export default BeeOneAIChat;
+
