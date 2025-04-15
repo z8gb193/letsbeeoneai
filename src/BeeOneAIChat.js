@@ -90,11 +90,21 @@ function BeeOneAIChat() {
     } else {
       const enteredCode = prompt("Welcome back 👋 Please enter your code word to continue:");
 
-      if (identity.codeWord.toLowerCase() === enteredCode?.trim().toLowerCase()) {
-        const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
-        setUserName(identity.firstName);
-        setChatHistory(savedHistory);
-        setAccessGranted(true);
+   if (identity.codeWord.toLowerCase() === enteredCode?.trim().toLowerCase()) {
+  const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
+  setUserName(identity.firstName);
+  setAccessGranted(true);
+
+  if (savedHistory.length === 0) {
+    const novaMsg = { type: 'text', content: `Welcome back, ${identity.firstName} 💛 I'm so glad you're here again.`, isUser: false };
+    setMessages([novaMsg]);
+    setChatHistory([novaMsg]);
+    localStorage.setItem(`novaMemory-${identity.firstName}`, JSON.stringify([novaMsg]));
+  } else {
+    setMessages(savedHistory);
+    setChatHistory(savedHistory);
+  }
+}
       } else {
         alert("Hmm... that didn’t sound quite right. Here’s one clue: it starts with \"" + identity.codeWord[0].toUpperCase() + "\"");
         const secondTry = prompt("Try again. What’s your code word?");
