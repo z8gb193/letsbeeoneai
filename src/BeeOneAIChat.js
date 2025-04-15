@@ -84,12 +84,8 @@ function BeeOneAIChat() {
           window.location.reload();
         }, 120000); // 2 minutes lockout
         return;
-      }
-    }
-    }
-  }
-});
-  }, [chatHistory]);
+        }
+}
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
