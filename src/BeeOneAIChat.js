@@ -51,14 +51,30 @@ function BeeOneAIChat() {
     const synth = window.speechSynthesis;
     const voices = synth.getVoices();
     const selectedVoice = voices.find(v => v.name.includes("Libby") || (v.name.includes("English") && v.lang === 'en-GB')) || voices[0];
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.voice = selectedVoice;
-    utter.lang = selectedVoice?.lang || 'en-GB';
-    utter.rate = 1;
-    utter.pitch = 1;
+
+    const segments = text.split(/(\.\.\.|\.|,|!|\?|
+)/g).filter(Boolean); // split by natural pauses
+
+    const speakNext = (index) => {
+      if (index >= segments.length) return;
+
+      const utter = new SpeechSynthesisUtterance(segments[index]);
+      utter.voice = selectedVoice;
+      utter.lang = selectedVoice?.lang || 'en-GB';
+      utter.rate = 1;
+      utter.pitch = 1;
+
+      utter.onend = () => {
+        // Pause for natural rhythm
+        setTimeout(() => speakNext(index + 1), 800 + Math.random() * 1500); // 0.8s–2.3s pause
+      };
+
+      synth.speak(utter);
+    };
+
     synth.cancel();
-    synth.speak(utter);
-  };
+    speakNext(0);
+};
 
   const handleUserMessage = (text) => {
     if (!text.trim()) return;
