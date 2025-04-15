@@ -1,4 +1,4 @@
-// FINAL BeeOneAIChat.js – fully working onboarding
+// FULL UPDATED BeeOneAIChat.js
 import React, { useState, useEffect, useRef } from 'react';
 
 const aiCharacters = {
@@ -35,107 +35,38 @@ function BeeOneAIChat() {
   const [attemptsLeft, setAttemptsLeft] = useState(2);
 
   useEffect(() => {
-    const identity = JSON.parse(localStorage.getItem("novaIdentity"));
+  const identity = JSON.parse(localStorage.getItem("novaIdentity"));
 
-    const startVoiceCheck = (challengeWord, firstName, savedHistory) => {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.lang = "en-US";
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
+  if (!identity) {
+    const firstName = prompt("Hi, I’m Nova 💛 What’s your first name?");
+    const petName = prompt("Do you have a pet? If so, what’s their name? (Leave blank if none)");
+    const motherName = prompt("What’s your mother’s first name?");
+    const age = prompt("How old are you?");
 
-      recognition.onresult = (event) => {
-        const spokenWord = event.results[0][0].transcript.trim().toLowerCase();
-        console.log("User said:", spokenWord);
+    if (!firstName || !motherName || !age) {
+      alert("All fields except pet name are required to continue.");
+      return;
+    }
 
-        if (spokenWord.includes(challengeWord.toLowerCase())) {
-          setAccessGranted(true);
-          setUserName(firstName);
-          setChatHistory(savedHistory);
-        } else {
-          if (attemptsLeft > 1) {
-            alert("Hmm... that didn’t sound quite right. Try again.");
-            setAttemptsLeft(prev => prev - 1);
-            window.location.reload();
-          } else {
-            alert("🚫 Access denied. Voice verification failed.");
-            document.body.innerHTML = `
-              <div style="text-align:center;margin-top:20vh;">
-                <h2>🚫 Locked Out</h2>
-                <p>Nova could not verify your identity. Access has been blocked.</p>
-              </div>`;
-            throw new Error("Unauthorized access");
-          }
-        }
-
-        setIsVerifying(false);
-        setMicStatus("");
-      };
-
-      recognition.onerror = (event) => {
-        console.error("Mic error:", event.error);
-        setMicStatus("🚫 Mic access failed.");
-        setIsVerifying(false);
-      };
-
-      setTimeout(() => recognition.start(), 300);
+    const profile = {
+      firstName: firstName.trim(),
+      petName: petName?.trim() || "none",
+      motherName: motherName.trim(),
+      age: age.trim()
     };
 
-    if (!identity) {
-      const name = prompt("Hi, I’m Nova 💛 What’s your first name?");
-      const firstName = name?.trim().split(" ")[0];
-
-      if (!firstName) {
-        alert("Name required to continue.");
-        return;
-      }
-
-      const chosenWords = [];
-      while (chosenWords.length < 3) {
-        const word = voiceWords[Math.floor(Math.random() * voiceWords.length)];
-        if (!chosenWords.includes(word)) chosenWords.push(word);
-      }
-
-      const challengeWord = chosenWords[Math.floor(Math.random() * chosenWords.length)];
-      localStorage.setItem("novaIdentity", JSON.stringify({ name: firstName, voiceWords: chosenWords }));
-      localStorage.setItem(`novaMemory-${firstName}`, JSON.stringify([]));
-
-      setMicStatus(`🎙️ Please say the word: "${challengeWord}"`);
-      setIsVerifying(true);
-      speak(`Please say the word: ${challengeWord}`);
-      startVoiceCheck(challengeWord, firstName, []);
-    } else {
-      const inputName = prompt("Welcome back! What’s your first name?");
-      const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${inputName}`)) || [];
-      const challengeWord = identity.voiceWords[Math.floor(Math.random() * identity.voiceWords.length)];
-
-      setMicStatus(`🎙️ Please say the word: "${challengeWord}"`);
-      setIsVerifying(true);
-      speak(`Please say the word: ${challengeWord}`);
-      startVoiceCheck(challengeWord, inputName, savedHistory);
-    }
-  }, []);
-
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [memory, setMemory] = useState([]);
-  const [language] = useState('en-GB');
-  const [isListening, setIsListening] = useState(false);
-  const [modalImage, setModalImage] = useState(null);
-  const chatEndRef = useRef(null);
-  const recognitionRef = useRef(null);
-
-  useEffect(() => {
-    if (userName) {
-      const savedChat = JSON.parse(localStorage.getItem(`novaMemory-${userName}`)) || [];
-      setMessages(savedChat);
-      setChatHistory(savedChat);
-    }
-  }, [userName]);
-
-  useEffect(() => {
-    localStorage.setItem(`novaMemory-${userName}`, JSON.stringify(chatHistory));
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    localStorage.setItem("novaIdentity", JSON.stringify(profile));
+    localStorage.setItem(`novaMemory-${profile.firstName}`, JSON.stringify([]));
+    setUserName(profile.firstName);
+    setChatHistory([]);
+    setAccessGranted(true);
+  } else {
+    const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
+    setUserName(identity.firstName);
+    setChatHistory(savedHistory);
+    setAccessGranted(true);
+  }
+});
   }, [chatHistory]);
 
   useEffect(() => {
@@ -208,11 +139,9 @@ function BeeOneAIChat() {
 
   return accessGranted ? (
     <>
-      <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
-        {/* You can restore left, center, and right panels here */}
-      </div>
+      {/* Existing layout here... */}
 
-      {/* ✅ Mic Status Floating Box */}
+      {/* Mic Status Indicator */}
       {isVerifying && (
         <div style={{
           position: 'fixed',
@@ -238,8 +167,17 @@ async function fetchReplyFromBackend(character, message, memory, userName = "Fri
   try {
     const response = await fetch("https://beeoneai-backend.onrender.com/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ character, message, memory, name: userName, userId: "default", gender: userGender })
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        character,
+        message,
+        memory,
+        name: userName,
+        userId: "default",
+        gender: userGender
+      })
     });
     const data = await response.json();
     return data.reply || "Hmm... I didn’t quite get that.";
