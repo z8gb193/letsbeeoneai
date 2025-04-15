@@ -203,18 +203,21 @@ const voiceSelector = (
 
   
 return (
-  <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
-    <div style={{ width: '200px', overflowY: 'auto', background: '#f9f9f9', padding: '10px', borderRight: '1px solid #ccc' }}>
-      {novaImages.map((img, idx) => (
-        <img
-          key={idx}
-          src={img}
-          alt={`Nova ${idx}`}
-          style={{ width: '100%', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer' }}
-          onClick={() => setSelectedImage(img)}
-        />
-      ))}
-    </div>
+  
+  <>
+    {voiceSelector}
+    <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
+      <div style={{ width: '200px', overflowY: 'auto', background: '#f9f9f9', padding: '10px', borderRight: '1px solid #ccc' }}>
+        {novaImages.map((img, idx) => (
+          <img
+            key={idx}
+            src={img}
+            alt={`Nova ${idx}`}
+            style={{ width: '100%', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer' }}
+            onClick={() => setSelectedImage(img)}
+          />
+        ))}
+      </div>
 
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
