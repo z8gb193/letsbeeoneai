@@ -79,8 +79,7 @@ function BeeOneAIChat() {
         setChatHistory(savedHistory);
         setAccessGranted(true);
       } else {
-        alert("🚫 Locked out. Please wait 2 minutes before trying again.
-If you're having trouble remembering your code word, email: deanopatent@hotmail.co.uk");
+       alert("🚫 Locked out. Please wait 2 minutes before trying again.\nIf you're having trouble remembering your code word, email: deanopatent@hotmail.co.uk");
         setTimeout(() => {
           window.location.reload();
         }, 120000); // 2 minutes lockout
