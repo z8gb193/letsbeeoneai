@@ -1,4 +1,3 @@
-// FULL UPDATED BeeOneAIChat.js
 import React, { useState, useEffect, useRef } from 'react';
 
 const aiCharacters = {
@@ -53,7 +52,7 @@ function BeeOneAIChat() {
       const inputName = prompt("Welcome back! Please enter your name to continue:");
       const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${inputName}`)) || [];
       const challengeWord = identity.voiceWords[Math.floor(Math.random() * identity.voiceWords.length)];
-      setMicStatus(`🎙️ Listening... Please say: \"${challengeWord}\"`);
+      setMicStatus(`🎙️ Please say the word: "${challengeWord}"`);
       setIsVerifying(true);
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -69,20 +68,21 @@ function BeeOneAIChat() {
         setMicStatus("");
 
         if (spokenWord.includes(challengeWord.toLowerCase())) {
-  setUserName(inputName);
-  setChatHistory(savedHistory);
-  setAccessGranted(true);
-} else {
-  if (attemptsLeft > 1) {
-    alert("Hmm... that didn’t sound quite right. Try again.");
-    setAttemptsLeft(prev => prev - 1);
-    window.location.reload();
-  } else {
-    alert("🚫 Access denied. Voice verification failed.");
-    document.body.innerHTML = `<div style="text-align:center;margin-top:20vh;"><h2>🚫 Locked Out</h2><p>Nova could not verify your identity. Access has been blocked.</p></div>`;
-    throw new Error("Unauthorized access");
-  }
-}
+          setUserName(inputName);
+          setChatHistory(savedHistory);
+          setAccessGranted(true);
+        } else {
+          if (attemptsLeft > 1) {
+            alert("Hmm... that didn’t sound quite right. Try again.");
+            setAttemptsLeft(prev => prev - 1);
+            window.location.reload();
+          } else {
+            alert("🚫 Access denied. Voice verification failed.");
+            document.body.innerHTML = `<div style="text-align:center;margin-top:20vh;"><h2>🚫 Locked Out</h2><p>Nova could not verify your identity. Access has been blocked.</p></div>`;
+            throw new Error("Unauthorized access");
+          }
+        }
+      };
 
       recognition.onerror = (event) => {
         console.error("Mic error:", event.error);
@@ -186,8 +186,7 @@ function BeeOneAIChat() {
 
   return accessGranted ? (
     <>
-      {/* Existing layout here... */}
-
+      {/* Your full layout and chat UI goes here */}
       {/* Mic Status Indicator */}
       {isVerifying && (
         <div style={{
