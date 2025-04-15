@@ -59,8 +59,8 @@ function BeeOneAIChat() {
   const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.voice = selectedVoice;
   utterance.lang = selectedVoice.lang;
-  utterance.rate = 1.15;
-  utterance.pitch = 1;
+  utterance.rate = 1.4;
+  utterance.pitch = 1.1;
      window.speechSynthesis.cancel();
 setIsSpeaking(true);
 window.speechSynthesis.speak(utterance);
