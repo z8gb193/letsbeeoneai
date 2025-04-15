@@ -281,12 +281,21 @@ function BeeOneAIChat() {
   );
 }
 
-async function fetchReplyFromBackend(character, message, memory) {
+async function fetchReplyFromBackend(character, message, memory, userName = "Friend", userGender = "unspecified") {
   try {
-    const response = await fetch('https://beeoneai-backend.onrender.com/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ character, message, memory }),
+    const response = await fetch("https://beeoneai-backend.onrender.com/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        character,
+        message,
+        memory,
+        name: userName,
+        userId: "default",
+        gender: userGender
+      })
     });
 
     const data = await response.json();
@@ -297,5 +306,4 @@ async function fetchReplyFromBackend(character, message, memory) {
   }
 }
 
-export default BeeOneAIChat;
-
+export default fetchReplyFromBackend;
