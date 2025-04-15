@@ -1,4 +1,3 @@
-// FULL UPDATED BeeOneAIChat.js
 import React, { useState, useEffect, useRef } from 'react';
 
 const aiCharacters = {
@@ -31,63 +30,71 @@ function BeeOneAIChat() {
   const [chatHistory, setChatHistory] = useState([]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [micStatus, setMicStatus] = useState("");
-  const voiceWords = ["sunflower", "echo", "crystal", "mirror", "nebula", "horizon", "flame", "ocean"];
   const [attemptsLeft, setAttemptsLeft] = useState(2);
+  const voiceWords = ["sunflower", "echo", "crystal", "mirror", "nebula", "horizon", "flame", "ocean"];
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [memory, setMemory] = useState([]);
+  const [language] = useState('en-GB');
+  const [isListening, setIsListening] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
+  const chatEndRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
-  const identity = JSON.parse(localStorage.getItem("novaIdentity"));
+    const identity = JSON.parse(localStorage.getItem("novaIdentity"));
 
-  if (!identity) {
-    const firstName = prompt("Hi, I’m Nova 💛 What’s your first name?");
-    const age = prompt("How old are you?");
-    const motherName = prompt("What’s your mother’s first name?");
-    const petName = prompt("What’s your pet’s name? (Leave blank if none)");
-    const codeWord = prompt("Give me a code word you can remember. 📌 Be sure to write it down — you’ll need it next time to access Nova!");
+    if (!identity) {
+      const firstName = prompt("Hi, I’m Nova 💛 What’s your first name?");
+      const age = prompt("How old are you?");
+      const motherName = prompt("What’s your mother’s first name?");
+      const petName = prompt("What’s your pet’s name? (Leave blank if none)");
+      const codeWord = prompt("Give me a code word you can remember. 📌 Be sure to write it down — you’ll need it next time to access Nova!");
 
-    if (!firstName || !age || !motherName || !codeWord) {
-      alert("All fields except pet name are required to continue.");
-      return;
-    }
+      if (!firstName || !age || !motherName || !codeWord) {
+        alert("All fields except pet name are required to continue.");
+        return;
+      }
 
-    const profile = {
-      firstName: firstName.trim(),
-      age: age.trim(),
-      motherName: motherName.trim(),
-      petName: petName?.trim() || "none",
-      codeWord: codeWord.trim()
-    };
+      const profile = {
+        firstName: firstName.trim(),
+        age: age.trim(),
+        motherName: motherName.trim(),
+        petName: petName?.trim() || "none",
+        codeWord: codeWord.trim()
+      };
 
-    localStorage.setItem("novaIdentity", JSON.stringify(profile));
-    localStorage.setItem(`novaMemory-${profile.firstName}`, JSON.stringify([]));
-    setUserName(profile.firstName);
-    setChatHistory([]);
-    setAccessGranted(true);
-  } else {
-    const enteredCode = prompt("Welcome back 👋 Please enter your code word to continue:");
-
-    if (identity.codeWord.toLowerCase() === enteredCode?.trim().toLowerCase()) {
-      const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
-      setUserName(identity.firstName);
-      setChatHistory(savedHistory);
+      localStorage.setItem("novaIdentity", JSON.stringify(profile));
+      localStorage.setItem(`novaMemory-${profile.firstName}`, JSON.stringify([]));
+      setUserName(profile.firstName);
+      setChatHistory([]);
       setAccessGranted(true);
-     } else {
-      alert("Hmm... that didn’t sound quite right. Here’s one clue: it starts with \"" + identity.codeWord[0].toUpperCase() + "\"");
-      const secondTry = prompt("Try again. What’s your code word?");
-      if (identity.codeWord.toLowerCase() === secondTry?.trim().toLowerCase()) {
+    } else {
+      const enteredCode = prompt("Welcome back 👋 Please enter your code word to continue:");
+
+      if (identity.codeWord.toLowerCase() === enteredCode?.trim().toLowerCase()) {
         const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
         setUserName(identity.firstName);
         setChatHistory(savedHistory);
         setAccessGranted(true);
       } else {
-        alert("🚫 Locked out. Please wait 2 minutes before trying again.\nIf you're having trouble remembering your code word, email: deanopatent@hotmail.co.uk");
-        setTimeout(() => {
-          window.location.reload();
-        }, 120000); // 2 minutes lockout
-        return;
+        alert("Hmm... that didn’t sound quite right. Here’s one clue: it starts with \"" + identity.codeWord[0].toUpperCase() + "\"");
+        const secondTry = prompt("Try again. What’s your code word?");
+        if (identity.codeWord.toLowerCase() === secondTry?.trim().toLowerCase()) {
+          const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
+          setUserName(identity.firstName);
+          setChatHistory(savedHistory);
+          setAccessGranted(true);
+        } else {
+          alert("🚫 Locked out. Please wait 2 minutes before trying again.\nIf you're having trouble remembering your code word, email: deanopatent@hotmail.co.uk");
+          setTimeout(() => {
+            window.location.reload();
+          }, 120000); // 2 minutes lockout
+          return;
+        }
       }
     }
-  }
-}, []);
+  }, []);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -159,9 +166,10 @@ function BeeOneAIChat() {
 
   return accessGranted ? (
     <>
-      {/* Existing layout here... */}
+      <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
+        {/* Add your layout here: panels, chat, etc. */}
+      </div>
 
-      {/* Mic Status Indicator */}
       {isVerifying && (
         <div style={{
           position: 'fixed',
@@ -204,9 +212,7 @@ async function fetchReplyFromBackend(character, message, memory, userName = "Fri
   } catch (error) {
     console.error("Backend error:", error);
     return "Hmm... Nova couldn’t connect just now.";
+  }
 }
-}, []);
 
 export default BeeOneAIChat;
-
-
