@@ -11,7 +11,11 @@ const novaImages = [
 ];
 
 function ChatMessage({ message }) {
-  $1
+  return (
+    <div className={`my-2 ${message.isUser ? 'text-right text-blue-600' : 'text-left text-gray-800'}`}>
+      {message.content}
+    </div>
+  );
 
       {/* Voice Selector */}
       <div style={{ position: 'fixed', top: '10px', left: '220px', background: '#fff', zIndex: 9999, padding: '10px', border: '1px solid #ccc', borderRadius: '8px' }}>
@@ -292,5 +296,3 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
-
-
