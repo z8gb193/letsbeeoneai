@@ -58,53 +58,44 @@ function BeeOneAIChat() {
   );
 }
 
-  const addMessage = (sender, text) => {
-    const selectedVoice = availableVoices.find(v => v.name === novaVoiceName);
-   const speak = (textToSpeak) => {
-  if (!window.speechSynthesis || !selectedVoice) return;
-  const cleanText = textToSpeak.replace(/[\u{1F600}-\u{1F6FF}\u{1F300}-\u{1F5FF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]/gu, '');
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  utterance.voice = selectedVoice;
-  utterance.lang = selectedVoice.lang;
-  utterance.rate = 1.4;
-  utterance.pitch = 1.1;
+const addMessage = (sender, text) => {
+  const selectedVoice = availableVoices.find(v => v.name === novaVoiceName);
 
-  window.speechSynthesis.cancel();
-  setIsSpeaking(true);
+  const speak = (textToSpeak) => {
+    if (!window.speechSynthesis || !selectedVoice) return;
+    const cleanText = textToSpeak.replace(/[\u{1F600}-\u{1F6FF}\u{1F300}-\u{1F5FF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}]/gu, '');
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.voice = selectedVoice;
+    utterance.lang = selectedVoice.lang;
+    utterance.rate = 1.4;
+    utterance.pitch = 1.1;
 
-  if (videoRef.current) {
-    videoRef.current.currentTime = 0;
-    videoRef.current.play().catch((e) => console.warn("Video play failed:", e));
-  }
+    window.speechSynthesis.cancel();
+    setIsSpeaking(true);
 
-  window.speechSynthesis.speak(utterance);
-
-  utterance.onend = () => {
-    setIsSpeaking(false);
     if (videoRef.current) {
-      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch((e) => console.warn("Video play failed:", e));
     }
-  };
-};
 
+    window.speechSynthesis.speak(utterance);
 
-
-    
-setIsSpeaking(true);
-window.speechSynthesis.speak(utterance);
-
-utterance.onend = () => {
-  setIsSpeaking(false);
-};
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
-};
-
-    const newMessage = { type: 'text', content: text, isUser: sender !== "Nova" };
-    setMessages(prev => [...prev, newMessage]);
-    if (sender === "Nova") speak(text);
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+    };
   };
 
+  const newMessage = { type: 'text', content: text, isUser: sender !== "Nova" };
+  setMessages(prev => [...prev, newMessage]);
+  if (sender === "Nova") speak(text);
+};
+
+
+
+  
   const handleUserMessage = (text) => {
     if (!text.trim()) return;
     addMessage("user", text);
