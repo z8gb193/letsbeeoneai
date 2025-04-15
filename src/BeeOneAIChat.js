@@ -235,4 +235,6 @@ return (
   </>
 );
 
+}
+
 export default BeeOneAIChat;
