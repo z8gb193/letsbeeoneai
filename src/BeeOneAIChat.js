@@ -12,11 +12,7 @@ const aiCharacters = {
       '/avatars/Nova4.png',
       '/avatars/Nova5.png',
       '/avatars/Nova6.png',
-    ],
-    response: (msg, memory) => {
-      if (memory.includes('sad')) return "I’m here for you, always.";
-      return "Thanks for sharing that.";
-    },
+    ]
   },
 };
 
@@ -112,13 +108,16 @@ function BeeOneAIChat() {
     const userMsg = { type: 'text', content: text, isUser: true };
     const newMemory = extractKeywords(text);
     const updatedMemory = Array.from(new Set([...memory, ...newMemory]));
-    const replyText = aiCharacters.Nova.response(text, updatedMemory);
-    const novaMsg = { type: 'text', content: replyText, isUser: false };
 
-    setMessages((prev) => [...prev, userMsg, novaMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     setMemory(updatedMemory);
     setInput('');
-    speak(replyText);
+
+    fetchReplyFromBackend("nova", text, updatedMemory, "Friend", "female").then(replyText => {
+      const novaMsg = { type: 'text', content: replyText, isUser: false };
+      setMessages((prev) => [...prev, novaMsg]);
+      speak(replyText);
+    });
   };
 
   return (
@@ -306,4 +305,4 @@ async function fetchReplyFromBackend(character, message, memory, userName = "Fri
   }
 }
 
-export default fetchReplyFromBackend;
+export default BeeOneAIChat;
