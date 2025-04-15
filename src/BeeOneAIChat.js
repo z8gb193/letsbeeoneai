@@ -42,7 +42,7 @@ function BeeOneAIChat() {
     const age = prompt("How old are you?");
     const motherName = prompt("What’s your mother’s first name?");
     const petName = prompt("What’s your pet’s name? (Leave blank if none)");
-    const codeWord = prompt("Give me a code word you can remember:");
+    const codeWord = prompt("Give me a code word you can remember. 📌 Be sure to write it down — you’ll need it next time to access Nova!");
 
     if (!firstName || !age || !motherName || !codeWord) {
       alert("All fields except pet name are required to continue.");
@@ -63,10 +63,31 @@ function BeeOneAIChat() {
     setChatHistory([]);
     setAccessGranted(true);
   } else {
-    const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
-    setUserName(identity.firstName);
-    setChatHistory(savedHistory);
-    setAccessGranted(true);
+    const enteredCode = prompt("Welcome back 👋 Please enter your code word to continue:");
+
+    if (identity.codeWord.toLowerCase() === enteredCode?.trim().toLowerCase()) {
+      const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
+      setUserName(identity.firstName);
+      setChatHistory(savedHistory);
+      setAccessGranted(true);
+    } else {
+      alert("Hmm... that didn’t sound quite right. Here’s one clue: it starts with \"" + identity.codeWord[0].toUpperCase() + "\"");
+      const secondTry = prompt("Try again. What’s your code word?");
+      if (identity.codeWord.toLowerCase() === secondTry?.trim().toLowerCase()) {
+        const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${identity.firstName}`)) || [];
+        setUserName(identity.firstName);
+        setChatHistory(savedHistory);
+        setAccessGranted(true);
+      } else {
+        alert("🚫 Locked out. Please wait 2 minutes before trying again.
+If you're having trouble remembering your code word, email: deanopatent@hotmail.co.uk");
+        setTimeout(() => {
+          window.location.reload();
+        }, 120000); // 2 minutes lockout
+        return;
+      }
+    }
+    }
   }
 });
   }, [chatHistory]);
@@ -190,4 +211,5 @@ async function fetchReplyFromBackend(character, message, memory, userName = "Fri
 }
 
 export default BeeOneAIChat;
+
 
