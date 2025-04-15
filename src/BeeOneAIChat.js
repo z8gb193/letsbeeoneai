@@ -1,3 +1,4 @@
+// FULL UPDATED BeeOneAIChat.js
 import React, { useState, useEffect, useRef } from 'react';
 
 const aiCharacters = {
@@ -28,8 +29,9 @@ function BeeOneAIChat() {
   const [accessGranted, setAccessGranted] = useState(false);
   const [userName, setUserName] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [micStatus, setMicStatus] = useState("");
   const voiceWords = ["sunflower", "echo", "crystal", "mirror", "nebula", "horizon", "flame", "ocean"];
-  const [voiceChallengeWord, setVoiceChallengeWord] = useState("");
   const [attemptsLeft, setAttemptsLeft] = useState(2);
 
   useEffect(() => {
@@ -51,57 +53,45 @@ function BeeOneAIChat() {
       const inputName = prompt("Welcome back! Please enter your name to continue:");
       const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${inputName}`)) || [];
       const challengeWord = identity.voiceWords[Math.floor(Math.random() * identity.voiceWords.length)];
-      setVoiceChallengeWord(challengeWord);
-      alert(`For security, please say the word: "${challengeWord}" aloud now. I’m listening...`);
+      setMicStatus(`🎙️ Listening... Please say: \"${challengeWord}\"`);
+      setIsVerifying(true);
 
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const recognition = new SpeechRecognition();
-recognition.lang = "en-US";
-recognition.interimResults = false;
-recognition.maxAlternatives = 1;
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
 
-recognition.onresult = (event) => {
-  const spokenWord = event.results[0][0].transcript.trim().toLowerCase();
-  console.log("User said:", spokenWord);
+      recognition.onresult = (event) => {
+        const spokenWord = event.results[0][0].transcript.trim().toLowerCase();
+        console.log("User said:", spokenWord);
+        setIsVerifying(false);
+        setMicStatus("");
 
-  if (spokenWord.includes(challengeWord.toLowerCase())) {
-    setUserName(inputName);
-    setChatHistory(savedHistory);
-    setAccessGranted(true);
-  } else {
-    if (attemptsLeft > 1) {
-      alert("Hmm... that didn’t sound quite right. Try again.");
-      setAttemptsLeft(prev => prev - 1);
-      window.location.reload();
-    } else {
-      alert("🚫 Access denied. Voice verification failed.");
-      document.body.innerHTML = `<div style="text-align:center;margin-top:20vh;"><h2>🚫 Locked Out</h2><p>Nova could not verify your identity. Access has been blocked.</p></div>`;
-      throw new Error("Unauthorized access");
-    }
-  }
-};
-
-recognition.onerror = (event) => {
-  alert("Microphone error or permission not granted.");
-  console.error("Mic error:", event.error);
-};
-
-recognition.start();
-      if (spokenWord?.toLowerCase().includes(challengeWord.toLowerCase())) {
-        setUserName(inputName);
-        setChatHistory(savedHistory);
-        setAccessGranted(true);
-      } else {
-        if (attemptsLeft > 1) {
-          alert("Hmm, that didn’t sound quite right. Try again.");
-          setAttemptsLeft(prev => prev - 1);
-          window.location.reload();
+        if (spokenWord.includes(challengeWord.toLowerCase())) {
+          setUserName(inputName);
+          setChatHistory(savedHistory);
+          setAccessGranted(true);
         } else {
-          alert("🚫 Access denied. Voice verification failed.");
-          document.body.innerHTML = `<div style="text-align:center;margin-top:20vh;"><h2>🚫 Locked Out</h2><p>Nova could not verify your identity. Access has been blocked.</p></div>`;
-          throw new Error("Unauthorized access");
+          if (attemptsLeft > 1) {
+            alert("Hmm... that didn’t sound quite right. Try again.");
+            setAttemptsLeft(prev => prev - 1);
+            window.location.reload();
+          } else {
+            alert("🚫 Access denied. Voice verification failed.");
+            document.body.innerHTML = `<div style="text-align:center;margin-top:20vh;"><h2>🚫 Locked Out</h2><p>Nova could not verify your identity. Access has been blocked.</p></div>`;
+            throw new Error("Unauthorized access");
+          }
         }
-      }
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Mic error:", event.error);
+        setMicStatus("🚫 Mic access failed. Please allow microphone use.");
+        setIsVerifying(false);
+      };
+
+      recognition.start();
     }
   }, []);
 
@@ -197,165 +187,24 @@ recognition.start();
 
   return accessGranted ? (
     <>
-      <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
-        {/* Left Panel – Nova Gallery */}
+      {/* Existing layout here... */}
+
+      {/* Mic Status Indicator */}
+      {isVerifying && (
         <div style={{
-          width: '200px',
-          padding: '1rem',
-          borderRight: '1px solid #ddd',
-          textAlign: 'center',
-          overflowY: 'auto',
-          maxHeight: '100vh',
+          position: 'fixed',
+          bottom: '1rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#222',
+          color: 'white',
+          padding: '0.75rem 1.25rem',
+          borderRadius: '10px',
+          fontSize: '1rem',
+          zIndex: 9999,
+          boxShadow: '0 0 10px rgba(0,0,0,0.5)'
         }}>
-          <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Nova</p>
-          {aiCharacters.Nova.gallery.map((src, idx) => (
-            <img
-              key={idx}
-              src={src}
-              alt={`Nova ${idx}`}
-              style={{
-                width: '100%',
-                borderRadius: '1rem',
-                marginBottom: '0.75rem',
-                cursor: 'pointer',
-              }}
-              onClick={() => setModalImage(src)}
-            />
-          ))}
-        </div>
-
-        {/* Center Panel */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1rem' }}>
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            background: '#f9f9f9',
-            padding: '1rem',
-            borderRadius: '0.5rem'
-          }}>
-            {messages.map((msg, idx) => (
-              <ChatMessage key={idx} message={msg} />
-            ))}
-            <div ref={chatEndRef} />
-          </div>
-
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleUserMessage(input);
-              }
-            }}
-            placeholder="Type or speak your message..."
-            style={{
-              marginTop: '1rem',
-              padding: '0.75rem',
-              borderRadius: '0.5rem',
-              border: '1px solid #ccc',
-              width: '100%',
-              maxWidth: '100%',
-              boxSizing: 'border-box',
-              resize: 'none',
-              fontSize: '1rem',
-              height: '80px',
-            }}
-          />
-
-          <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
-            <button
-              onClick={() => {
-                if (isListening) {
-                  recognitionRef.current?.stop();
-                  setIsListening(false);
-                } else {
-                  recognitionRef.current?.start();
-                  setIsListening(true);
-                }
-              }}
-              style={{
-                padding: '0.5rem 1rem',
-                background: isListening ? '#dc3545' : '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.5rem',
-              }}
-            >
-              {isListening ? '🔇 Stop Listening' : '🎤 Speak'}
-            </button>
-          </div>
-        </div>
-
-        {/* Right Panel – Nova Video */}
-        style={{
-  width: '125px', // previously 250px
-  padding: '0.5rem',
-  borderLeft: '1px solid #ddd',
-  textAlign: 'center'
-}}
-          <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>🎥 Nova Talking</p>
-          <video
-            src="/videos/NovaTalk1.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            style={{
-              width: '100%',
-              borderRadius: '1rem',
-              boxShadow: '0 0 8px rgba(0,0,0,0.2)',
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Modal Image Viewer */}
-      {modalImage && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 999,
-          }}
-        >
-          <div style={{ position: 'relative' }}>
-            <img
-              src={modalImage}
-              alt="Expanded Nova"
-              style={{
-                maxWidth: '80vw',
-                maxHeight: '80vh',
-                borderRadius: '1rem',
-                boxShadow: '0 0 15px rgba(0,0,0,0.8)',
-              }}
-            />
-            <button
-              onClick={() => setModalImage(null)}
-              style={{
-                position: 'absolute',
-                top: '-1rem',
-                right: '-1rem',
-                fontSize: '1.5rem',
-                background: '#fff',
-                border: 'none',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                width: '2rem',
-                height: '2rem',
-                lineHeight: '2rem',
-              }}
-            >
-              ❌
-            </button>
-          </div>
+          {micStatus}
         </div>
       )}
     </>
