@@ -45,16 +45,34 @@ function BeeOneAIChat() {
     const identity = JSON.parse(localStorage.getItem("novaIdentity"));
 
     if (!identity) {
-      const firstName = prompt("Hi, I’m Nova 💛 What’s your first name?");
-      const age = prompt("How old are you?");
-      const motherName = prompt("What’s your mother’s first name?");
-      const petName = prompt("What’s your pet’s name? (Leave blank if none)");
-      const codeWord = prompt("Give me a code word you can remember. 📌 Be sure to write it down — you’ll need it next time to access Nova!");
+  const firstName = prompt("Hi, I’m Nova 💛 What’s your first name?");
+  const age = prompt("How old are you?");
+  const motherName = prompt("What’s your mother’s first name?");
+  const petName = prompt("What’s your pet’s name? (Leave blank if none)");
+  const codeWord = prompt("Give me a code word you can remember. 📌 Be sure to write it down — you’ll need it next time to access Nova!");
 
-      if (!firstName || !age || !motherName || !codeWord) {
-        alert("All fields except pet name are required to continue.");
-        return;
-      }
+  if (!firstName || !age || !motherName || !codeWord) {
+    alert("All fields except pet name are required to continue.");
+    return;
+  }
+
+  const profile = {
+    firstName: firstName.trim(),
+    age: age.trim(),
+    motherName: motherName.trim(),
+    petName: petName?.trim() || "none",
+    codeWord: codeWord.trim()
+  };
+
+  localStorage.setItem("novaIdentity", JSON.stringify(profile));
+  localStorage.setItem(`novaMemory-${profile.firstName}`, JSON.stringify([]));
+  setUserName(profile.firstName);
+  setChatHistory([]);
+
+  // ✅ Redirect to full version after setup complete
+  window.location.href = `https://letsbeeone-deploy-2024.netlify.app/?user=${encodeURIComponent(profile.codeWord)}`;
+  return;
+}
 
       const profile = {
         firstName: firstName.trim(),
