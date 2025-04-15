@@ -56,12 +56,6 @@ function BeeOneAIChat() {
 
   const speakWithVoice = () => {
     const voices = synth.getVoices();
-    if (!voices.length) {
-      console.warn('No voices available.');
-      return;
-    }
-
-    // Force fixed voice only
     const selectedVoice = voices.find(v => v.name === 'Google UK English Female');
 
     if (!selectedVoice) {
@@ -82,6 +76,27 @@ function BeeOneAIChat() {
     synth.speak(utterance);
   };
 
+  
+  } else {
+    synth.onvoiceschanged = () => {
+      synth.onvoiceschanged = null;
+      speakWithVoice();
+    };
+  }
+};
+  };
+
+  if (synth.getVoices().length) {
+    speakWithVoice();
+  } else {
+    synth.onvoiceschanged = () => {
+      synth.onvoiceschanged = null;
+      speakWithVoice();
+    };
+  }
+};
+  };
+
   if (synth.getVoices().length) {
     speakWithVoice();
   } else {
@@ -92,28 +107,17 @@ function BeeOneAIChat() {
   }
 };
 
-        synth.speak(utter);
-      };
-
-      synth.cancel();
-      speakNext(0);
+        
     };
 
-    if (synth.getVoices().length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => {
-  window.speechSynthesis.onvoiceschanged = null; // avoid double call
-  speakWithVoice();
+    
 };
     } else {
       speakWithVoice();
     }
 };
 
-      synth.speak(utter);
-    };
-
-    synth.cancel();
-    speakNext(0);
+      
 };
 
   const handleUserMessage = (text) => {
@@ -265,4 +269,5 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
+
 
