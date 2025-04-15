@@ -165,8 +165,8 @@ function BeeOneAIChat() {
   </select>
   <button onClick={() => {
     const v = availableVoices.find(v => v.name === novaVoiceName);
-    if (v) {
-      const u = new SpeechSynthesisUtterance(\"Hi! I’m Nova. This is how I sound.\");
+    if (v) 
+    {const u = new SpeechSynthesisUtterance("Hi! I’m Nova. This is how I sound.");
       u.voice = v;
       window.speechSynthesis.speak(u);
     }
