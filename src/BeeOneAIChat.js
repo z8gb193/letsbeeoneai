@@ -18,7 +18,7 @@ function BeeOneAIChat() {
   useEffect(() => {
     const identity = JSON.parse(localStorage.getItem("novaIdentity"));
 
-    if (identity) {
+    if (identity && identity.codeWord) {
       setUserName(identity.firstName);
       setSetupStage("verify");
       addMessage("Nova", "Hey! What’s the codeword you gave me last time?");
@@ -59,7 +59,7 @@ function BeeOneAIChat() {
 
     if (setupStage === "askPet") {
       setSetupStage("askCodeword");
-      addMessage("Nova", "Now pick a codeword I’ll remember you by forever 💾. Write it down!");
+      addMessage("Nova", "Now choose a codeword you’ll remember. This will be your key next time! 🧠 Write it down now.");
       return;
     }
 
@@ -73,7 +73,7 @@ function BeeOneAIChat() {
       };
       localStorage.setItem("novaIdentity", JSON.stringify(identity));
       setSetupStage("complete");
-      addMessage("Nova", `Got it, ${userName}. Your codeword is saved! Let’s begin 💛`);
+      addMessage("Nova", `Great! Your codeword is saved in my memory, ${userName}. Next time, I’ll ask for it before we start. 💾`);
       return;
     }
 
@@ -81,9 +81,9 @@ function BeeOneAIChat() {
       const saved = JSON.parse(localStorage.getItem("novaIdentity"));
       if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
         setSetupStage("complete");
-        addMessage("Nova", `Access granted 💛 Welcome back, ${saved.firstName}`);
+        addMessage("Nova", `Access granted 💛 Welcome back, ${saved.firstName}! Let's get going.`);
       } else {
-        addMessage("Nova", "Hmm... that’s not it. Want to try again?");
+        addMessage("Nova", "Hmm... that’s not quite right. Until I get the correct codeword, things might be a bit... slow. 😶‍🌫️ Try again?");
       }
       return;
     }
@@ -135,4 +135,3 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
-
