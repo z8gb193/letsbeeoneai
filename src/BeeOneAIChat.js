@@ -202,8 +202,8 @@ async function fetchReplyFromBackend(character, message, memory, userName = "Fri
   } catch (error) {
     console.error("Backend error:", error);
     return "Hmm... Nova couldn’t connect just now.";
-  }
 }
+}, []);
 
 export default BeeOneAIChat;
 
