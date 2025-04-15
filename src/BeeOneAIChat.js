@@ -149,6 +149,9 @@ function BeeOneAIChat() {
     }
   };
 
+  
+  return (
+    <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
 
 <div style={{ position: 'fixed', top: 10, left: 220, zIndex: 1000, background: '#fff', padding: 10 }}>
   <select
@@ -165,16 +168,14 @@ function BeeOneAIChat() {
   </select>
   <button onClick={() => {
     const v = availableVoices.find(v => v.name === novaVoiceName);
-    if (v) 
-    {const u = new SpeechSynthesisUtterance("Hi! I’m Nova. This is how I sound.");
+    if (v) {
+      const u = new SpeechSynthesisUtterance("Hi! I’m Nova. This is how I sound.");
       u.voice = v;
       window.speechSynthesis.speak(u);
     }
   }}>Preview</button>
 </div>
   
-  return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
       <div style={{ width: '200px', overflowY: 'auto', background: '#f9f9f9', padding: '10px', borderRight: '1px solid #ccc' }}>
         {novaImages.map((img, idx) => (
           <img
