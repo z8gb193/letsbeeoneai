@@ -160,24 +160,38 @@ function BeeOneAIChat() {
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleUserMessage(input);
-      setInput('');
-    }
-  };
+const handleKeyPress = (e) => {
+  if (e.key === 'Enter') {
+    handleUserMessage(input);
+    setInput('');
+  }
+};
 
-// 🔊 Add voice selector here:
 const voiceSelector = (
-  <div style={{ position: 'fixed', top: 10, left: 220, zIndex: 1000, background: '#fff', padding: 10, border: '1px solid #ccc', borderRadius: '8px' }}>
-    <label style={{ marginRight: 8 }}>Voice:</label>
+  <div style={{
+    position: 'fixed',
+    top: 20,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 1000,
+    background: '#ffffff',
+    padding: '12px 20px',
+    border: '1px solid #ccc',
+    borderRadius: '12px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    fontFamily: 'Arial, sans-serif',
+  }}>
+    <label style={{ fontWeight: 'bold' }}>Voice:</label>
     <select
       value={novaVoiceName}
       onChange={(e) => {
         setNovaVoiceName(e.target.value);
         localStorage.setItem('novaVoice', e.target.value);
       }}
-      style={{ padding: '4px 8px' }}
+      style={{ padding: '8px 12px', fontSize: '14px' }}
     >
       <option value="">-- Select Nova's Voice --</option>
       {availableVoices.map((v, i) => (
@@ -194,47 +208,31 @@ const voiceSelector = (
           window.speechSynthesis.speak(u);
         }
       }}
-      style={{ marginLeft: 10, padding: '4px 10px' }}
+      style={{
+        padding: '8px 12px',
+        fontSize: '14px',
+        backgroundColor: '#007bff',
+        color: '#fff',
+        border: 'none',
+        borderRadius: '6px',
+        cursor: 'pointer'
+      }}
     >
       Preview
     </button>
   </div>
 );
 
+// ✅ FINAL FIX: Add the return block!
 return (
   <>
     {voiceSelector}
 
     <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      {/* Left panel (images), center chat, right video */}
+      {/* Your layout: left | center | right */}
     </div>
-
-    {selectedImage && (
-      <div
-        onClick={() => setSelectedImage(null)}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000
-        }}
-      >
-        <img
-          src={selectedImage}
-          alt="Expanded Nova"
-          style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: '12px' }}
-        />
-      </div>
-    )}
   </>
 );
-
 }
 
 export default BeeOneAIChat;
