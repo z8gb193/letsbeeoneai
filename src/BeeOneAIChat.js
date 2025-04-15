@@ -52,12 +52,11 @@ function BeeOneAIChat() {
 
     const speakWithVoice = () => {
       const voices = synth.getVoices();
-      const selectedVoice = voices.find(v => v.name === 'Microsoft Libby Online (Natural)') ||
-                            voices.find(v => v.lang === 'en-GB' && v.name.toLowerCase().includes('female')) ||
-                            voices.find(v => v.lang === 'en-GB') ||
-                            voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female')) ||
-                            voices.find(v => v.lang.startsWith('en')) ||
-                            voices[0];
+      const selectedVoice = voices.find(v =>
+        v.name === 'Google UK English Female' ||
+        v.name === 'Microsoft Libby Online (Natural)' ||
+        v.name.toLowerCase().includes('female')
+      ) || voices[0];
 
       const segments = text.split(/(\.\.\.|\.|,|!|\?|
 )/g).filter(Boolean);
@@ -248,4 +247,3 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
-
