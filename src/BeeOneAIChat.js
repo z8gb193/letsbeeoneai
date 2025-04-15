@@ -69,21 +69,20 @@ function BeeOneAIChat() {
         setMicStatus("");
 
         if (spokenWord.includes(challengeWord.toLowerCase())) {
-          setUserName(inputName);
-          setChatHistory(savedHistory);
-          setAccessGranted(true);
-        } else {
-          if (attemptsLeft > 1) {
-            alert("Hmm... that didn’t sound quite right. Try again.");
-            setAttemptsLeft(prev => prev - 1);
-            window.location.reload();
-          } else {
-            alert("🚫 Access denied. Voice verification failed.");
-            document.body.innerHTML = `<div style="text-align:center;margin-top:20vh;"><h2>🚫 Locked Out</h2><p>Nova could not verify your identity. Access has been blocked.</p></div>`;
-            throw new Error("Unauthorized access");
-          }
-        }
-      };
+  setUserName(inputName);
+  setChatHistory(savedHistory);
+  setAccessGranted(true);
+} else {
+  if (attemptsLeft > 1) {
+    alert("Hmm... that didn’t sound quite right. Try again.");
+    setAttemptsLeft(prev => prev - 1);
+    window.location.reload();
+  } else {
+    alert("🚫 Access denied. Voice verification failed.");
+    document.body.innerHTML = `<div style="text-align:center;margin-top:20vh;"><h2>🚫 Locked Out</h2><p>Nova could not verify your identity. Access has been blocked.</p></div>`;
+    throw new Error("Unauthorized access");
+  }
+}
 
       recognition.onerror = (event) => {
         console.error("Mic error:", event.error);
