@@ -170,37 +170,36 @@ function BeeOneAIChat() {
 // 🔊 Add voice selector here:
 const voiceSelector = (
   <div style={{ position: 'fixed', top: 10, left: 220, zIndex: 1000, background: '#fff', padding: 10, border: '1px solid #ccc', borderRadius: '8px' }}>
-    <label style={{ marginRight: 8 }}>Voice:</label>
-    <select
-      value={novaVoiceName}
-      onChange={(e) => {
-        setNovaVoiceName(e.target.value);
-        localStorage.setItem('novaVoice', e.target.value);
-      }}
-      style={{ padding: '4px 8px' }}
-    >
-      <option value="">-- Select Nova's Voice --</option>
-      {availableVoices.map((v, i) => (
-        <option key={i} value={v.name}>{v.name} ({v.lang})</option>
-      ))}
-    </select>
+  <label style={{ marginRight: 8 }}>Voice:</label>
+  <select
+    value={novaVoiceName}
+    onChange={(e) => {
+      setNovaVoiceName(e.target.value);
+      localStorage.setItem('novaVoice', e.target.value);
+    }}
+    style={{ padding: '4px 8px' }}
+  >
+    <option value="">-- Select Nova's Voice --</option>
+    {availableVoices.map((v, i) => (
+      <option key={i} value={v.name}>{v.name} ({v.lang})</option>
+    ))}
+  </select>
 
-    <button
-      onClick={() => {
-        const v = availableVoices.find(v => v.name === novaVoiceName);
-        if (v) {
-          const u = new SpeechSynthesisUtterance("Hi! I’m Nova. This is how I sound.");
-          u.voice = v;
-          window.speechSynthesis.speak(u);
-        }
-      }}
-      style={{ marginLeft: 10, padding: '4px 10px' }}
-    >
-      Preview
-    </button>
-  </div>
+  <button
+    onClick={() => {
+      const v = availableVoices.find(v => v.name === novaVoiceName);
+      if (v) {
+        const u = new SpeechSynthesisUtterance("Hi! I’m Nova. This is how I sound.");
+        u.voice = v;
+        window.speechSynthesis.speak(u);
+      }
+    }}
+    style={{ marginLeft: 10, padding: '4px 10px' }}
+  >
+    Preview
+  </button>
+</div>
 );
-
 
   
 return (
@@ -223,13 +222,24 @@ return (
           <ChatMessage key={index} message={msg} />
         ))}
       </div>
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyPress={handleKeyPress}
-        placeholder="Type your message..."
-        style={{ width: '100%', padding: '10px', borderTop: '1px solid #ccc' }}
-      />
+   <input
+  value={input}
+  onChange={(e) => setInput(e.target.value)}
+  onKeyPress={handleKeyPress}
+  placeholder="Type your message..."
+  style={{
+    width: '90%',
+    height: '120px',
+    padding: '20px',
+    fontSize: '18px',
+    border: '1px solid #ccc',
+    borderRadius: '8px',
+    margin: '20px auto',
+    display: 'block'
+  }}
+/>
+
+        
     </div>
 
     <div style={{ width: '300px', background: '#f0f0f0', padding: '10px', borderLeft: '1px solid #ccc', display: 'flex', justifyContent: 'center' }}>
