@@ -39,20 +39,22 @@ function BeeOneAIChat() {
 
   if (!identity) {
     const firstName = prompt("Hi, I’m Nova 💛 What’s your first name?");
-    const petName = prompt("Do you have a pet? If so, what’s their name? (Leave blank if none)");
-    const motherName = prompt("What’s your mother’s first name?");
     const age = prompt("How old are you?");
+    const motherName = prompt("What’s your mother’s first name?");
+    const petName = prompt("What’s your pet’s name? (Leave blank if none)");
+    const codeWord = prompt("Give me a code word you can remember:");
 
-    if (!firstName || !motherName || !age) {
+    if (!firstName || !age || !motherName || !codeWord) {
       alert("All fields except pet name are required to continue.");
       return;
     }
 
     const profile = {
       firstName: firstName.trim(),
-      petName: petName?.trim() || "none",
+      age: age.trim(),
       motherName: motherName.trim(),
-      age: age.trim()
+      petName: petName?.trim() || "none",
+      codeWord: codeWord.trim()
     };
 
     localStorage.setItem("novaIdentity", JSON.stringify(profile));
