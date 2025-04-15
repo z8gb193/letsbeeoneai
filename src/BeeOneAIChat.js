@@ -27,6 +27,7 @@ function BeeOneAIChat() {
   const [memory, setMemory] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const videoRef = useRef(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     const synth = window.speechSynthesis;
@@ -60,6 +61,13 @@ function BeeOneAIChat() {
   utterance.lang = selectedVoice.lang;
   utterance.rate = 1.15;
   utterance.pitch = 1;
+     window.speechSynthesis.cancel();
+setIsSpeaking(true);
+window.speechSynthesis.speak(utterance);
+
+utterance.onend = () => {
+  setIsSpeaking(false);
+};
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utterance);
 };
@@ -205,14 +213,20 @@ function BeeOneAIChat() {
       </div>
 
       <div style={{ width: '300px', background: '#f0f0f0', padding: '10px', borderLeft: '1px solid #ccc' }}>
-        <video
-          ref={videoRef}
-          src="/videos/NovaTalk1.mp4"
-          autoPlay
-          muted
-          loop
-          style={{ width: '100%', borderRadius: '12px' }}
-        />
+       <video
+  ref={videoRef}
+  src="/videos/NovaTalk1.mp4"
+  muted
+  loop
+  style={{
+    width: '150px',
+    height: '200px',
+    borderRadius: '12px',
+    opacity: isSpeaking ? 1 : 0.15,
+    transition: 'opacity 0.3s'
+  }}
+  autoPlay={isSpeaking}
+/>
       </div>
 
       {selectedImage && (
