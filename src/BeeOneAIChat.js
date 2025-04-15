@@ -51,6 +51,13 @@ function BeeOneAIChat() {
     }
   }, []);
 
+  return (
+    <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
+      {/* All your layout here */}
+    </div>
+  );
+}
+
   const addMessage = (sender, text) => {
     const selectedVoice = availableVoices.find(v => v.name === novaVoiceName);
    const speak = (textToSpeak) => {
