@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const novaImages = [
   '/avatars/Nova.png',
-  '/avatars/Nova1.png',
   '/avatars/Nova2.png',
   '/avatars/Nova3.png',
   '/avatars/Nova4.png',
