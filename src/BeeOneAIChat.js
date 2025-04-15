@@ -43,6 +43,7 @@ function BeeOneAIChat() {
       const word = voiceWords[Math.floor(Math.random() * voiceWords.length)];
       if (!chosenWords.includes(word)) chosenWords.push(word);
     }
+
     alert(`Say these words out loud now:\n${chosenWords.join(", ")}`);
     localStorage.setItem("novaIdentity", JSON.stringify({ name, voiceWords: chosenWords }));
     localStorage.setItem(`novaMemory-${name}`, JSON.stringify([]));
@@ -54,7 +55,7 @@ function BeeOneAIChat() {
     const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${inputName}`)) || [];
     const challengeWord = identity.voiceWords[Math.floor(Math.random() * identity.voiceWords.length)];
 
-    // ✅ Speak and show the word
+    // ✅ Set visual prompt + speak BEFORE mic starts
     setMicStatus(`🎙️ Please say the word: "${challengeWord}"`);
     setIsVerifying(true);
     speak(`Please say the word: ${challengeWord}`);
@@ -73,23 +74,25 @@ function BeeOneAIChat() {
         setUserName(inputName);
         setChatHistory(savedHistory);
         setAccessGranted(true);
-        setMicStatus("");
-        setIsVerifying(false);
       } else {
         if (attemptsLeft > 1) {
           alert("Hmm... that didn’t sound quite right. Try again.");
           setAttemptsLeft(prev => prev - 1);
-          setMicStatus("");
-          setIsVerifying(false);
           window.location.reload();
         } else {
           alert("🚫 Access denied. Voice verification failed.");
-          setMicStatus("");
-          setIsVerifying(false);
-          document.body.innerHTML = `<div style="text-align:center;margin-top:20vh;"><h2>🚫 Locked Out</h2><p>Nova could not verify your identity. Access has been blocked.</p></div>`;
+          document.body.innerHTML = `
+            <div style="text-align:center;margin-top:20vh;">
+              <h2>🚫 Locked Out</h2>
+              <p>Nova could not verify your identity. Access has been blocked.</p>
+            </div>`;
           throw new Error("Unauthorized access");
         }
       }
+
+      // ✅ Clear the visual after result
+      setMicStatus("");
+      setIsVerifying(false);
     };
 
     recognition.onerror = (event) => {
