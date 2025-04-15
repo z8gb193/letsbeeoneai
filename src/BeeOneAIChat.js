@@ -11,14 +11,45 @@ const novaImages = [
 ];
 
 function ChatMessage({ message }) {
-  return (
-    <div className={`my-2 ${message.isUser ? 'text-right text-blue-600' : 'text-left text-gray-800'}`}>
+  $1
+
+      {/* Voice Selector */}
+      <div style={{ position: 'fixed', top: '10px', left: '220px', background: '#fff', zIndex: 9999, padding: '10px', border: '1px solid #ccc', borderRadius: '8px' }}>
+        <strong>Select Nova's Voice:</strong>
+        <select
+          value={novaVoiceName}
+          onChange={(e) => {
+            setNovaVoiceName(e.target.value);
+            localStorage.setItem('novaVoice', e.target.value);
+          }}
+        >
+          <option value="">-- Select a Voice --</option>
+          {availableVoices.map((voice, index) => (
+            <option key={index} value={voice.name}>{voice.name} ({voice.lang})</option>
+          ))}
+        </select>
+        <button
+          onClick={() => {
+            const selected = availableVoices.find(v => v.name === novaVoiceName);
+            if (selected) {
+              const test = new SpeechSynthesisUtterance("Hi! I’m Nova. This is how I sound.");
+              test.voice = selected;
+              window.speechSynthesis.speak(test);
+            }
+          }}
+          style={{ marginLeft: '10px' }}
+        >
+          Preview
+        </button>
+      </div>
       {message.content}
     </div>
   );
 }
 
 function BeeOneAIChat() {
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [novaVoiceName, setNovaVoiceName] = useState(localStorage.getItem('novaVoice') || '');
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [userName, setUserName] = useState('');
@@ -28,6 +59,15 @@ function BeeOneAIChat() {
   const videoRef = useRef(null);
 
   useEffect(() => {
+    const synth = window.speechSynthesis;
+    const loadVoices = () => {
+      const voices = synth.getVoices();
+      setAvailableVoices(voices);
+    };
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = loadVoices;
+    }
+    loadVoices();
     const identity = JSON.parse(localStorage.getItem("novaIdentity"));
 
     if (identity && identity.codeWord) {
@@ -41,6 +81,17 @@ function BeeOneAIChat() {
   }, []);
 
   const addMessage = (sender, text) => {
+    const selectedVoice = availableVoices.find(v => v.name === novaVoiceName);
+    const speak = (textToSpeak) => {
+      if (!window.speechSynthesis || !selectedVoice) return;
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice.lang;
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    };
     const newMessage = { type: 'text', content: text, isUser: sender !== "Nova" ? true : false };
     setMessages(prev => [...prev, newMessage]);
     if (sender === "Nova") speak(text);
