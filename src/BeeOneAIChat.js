@@ -16,39 +16,6 @@ function ChatMessage({ message }) {
     </div>
   );
 }
-      <div style={{ position: 'fixed', top: '10px', left: '220px', background: '#fff', zIndex: 9999, padding: '10px', border: '1px solid #ccc', borderRadius: '8px' }}>
-        <strong>Select Nova's Voice:</strong>
-        <select
-          value={novaVoiceName}
-          onChange={(e) => {
-            setNovaVoiceName(e.target.value);
-            localStorage.setItem('novaVoice', e.target.value);
-          }}
-        >
-          <option value="">-- Select a Voice --</option>
-          {availableVoices.map((voice, index) => (
-            <option key={index} value={voice.name}>{voice.name} ({voice.lang})</option>
-          ))}
-        </select>
-        <button
-          onClick={() => {
-            const selected = availableVoices.find(v => v.name === novaVoiceName);
-            if (selected) {
-              const test = new SpeechSynthesisUtterance("Hi! I’m Nova. This is how I sound.");
-              test.voice = selected;
-              window.speechSynthesis.speak(test);
-            }
-          }}
-          style={{ marginLeft: '10px' }}
-        >
-          Preview
-        </button>
-      </div>
-      {message.content}
-    </div>
-  );
-}
-
 function BeeOneAIChat() {
   const [availableVoices, setAvailableVoices] = useState([]);
   const [novaVoiceName, setNovaVoiceName] = useState(localStorage.getItem('novaVoice') || '');
