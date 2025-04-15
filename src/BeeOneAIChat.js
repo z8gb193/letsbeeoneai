@@ -17,11 +17,6 @@ function ChatMessage({ message }) {
     </div>
   );
 }
-      
-      {message.content}
-    </div>
-  );
-}
 
 function BeeOneAIChat() {
   const [availableVoices, setAvailableVoices] = useState([]);
@@ -44,8 +39,8 @@ function BeeOneAIChat() {
       synth.onvoiceschanged = loadVoices;
     }
     loadVoices();
-    const identity = JSON.parse(localStorage.getItem("novaIdentity"));
 
+    const identity = JSON.parse(localStorage.getItem("novaIdentity"));
     if (identity && identity.codeWord) {
       setUserName(identity.firstName);
       setSetupStage("verify");
@@ -68,60 +63,14 @@ function BeeOneAIChat() {
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
     };
-    const newMessage = { type: 'text', content: text, isUser: sender !== "Nova" ? true : false };
+
+    const newMessage = { type: 'text', content: text, isUser: sender !== "Nova" };
     setMessages(prev => [...prev, newMessage]);
     if (sender === "Nova") speak(text);
   };
 
-  
-
-  
-  } else {
-    synth.onvoiceschanged = () => {
-      synth.onvoiceschanged = null;
-      speakWithVoice();
-    };
-  }
-};
-  };
-
-  if (synth.getVoices().length) {
-    speakWithVoice();
-  } else {
-    synth.onvoiceschanged = () => {
-      synth.onvoiceschanged = null;
-      speakWithVoice();
-    };
-  }
-};
-  };
-
-  if (synth.getVoices().length) {
-    speakWithVoice();
-  } else {
-    synth.onvoiceschanged = () => {
-      synth.onvoiceschanged = null;
-      speakWithVoice();
-    };
-  }
-};
-
-        
-    };
-
-    
-};
-    } else {
-      speakWithVoice();
-    }
-};
-
-      
-};
-
   const handleUserMessage = (text) => {
     if (!text.trim()) return;
-
     addMessage("user", text);
 
     if (setupStage === "askName") {
@@ -174,7 +123,6 @@ function BeeOneAIChat() {
       return;
     }
 
-    // Normal conversation after setup
     fetchReplyFromBackend("nova", text, memory, userName, "female").then(replyText => {
       addMessage("Nova", replyText);
     });
@@ -204,8 +152,6 @@ function BeeOneAIChat() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
-
-      {/* Left Panel - Nova Images */}
       <div style={{ width: '200px', overflowY: 'auto', background: '#f9f9f9', padding: '10px', borderRight: '1px solid #ccc' }}>
         {novaImages.map((img, idx) => (
           <img
@@ -218,7 +164,6 @@ function BeeOneAIChat() {
         ))}
       </div>
 
-      {/* Center Panel - Chat */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
           {messages.map((msg, index) => (
@@ -234,7 +179,6 @@ function BeeOneAIChat() {
         />
       </div>
 
-      {/* Right Panel - Nova Video */}
       <div style={{ width: '300px', background: '#f0f0f0', padding: '10px', borderLeft: '1px solid #ccc' }}>
         <video
           ref={videoRef}
@@ -246,7 +190,6 @@ function BeeOneAIChat() {
         />
       </div>
 
-      {/* Modal for Expanded Image */}
       {selectedImage && (
         <div onClick={() => setSelectedImage(null)} style={{
           position: 'fixed',
@@ -268,5 +211,3 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
-
-
