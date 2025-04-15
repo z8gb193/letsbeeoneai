@@ -50,7 +50,7 @@ function BeeOneAIChat() {
     if (!window.speechSynthesis) return;
     const synth = window.speechSynthesis;
     const voices = synth.getVoices();
-    const selectedVoice = voices.find(v => v.name.includes("Libby") || (v.name.includes("English") && v.lang === 'en-GB')) || voices[0];
+    const selectedVoice = voices.find(v => v.name === 'Microsoft Libby Online (Natural)' || v.name.includes("English Female") || (v.lang === 'en-GB' && v.name.toLowerCase().includes('female'))) || voices[0];
 
     const segments = text.split(/(\.\.\.|\.|,|!|\?|
 )/g).filter(Boolean); // split by natural pauses
@@ -225,3 +225,4 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
+
