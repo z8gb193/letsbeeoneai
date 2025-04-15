@@ -183,29 +183,33 @@ function BeeOneAIChat() {
     });
   };
 
-  return accessGranted ? (
-    <>
-      {/* Your full layout and chat UI goes here */}
-      {/* Mic Status Indicator */}
-      {isVerifying && (
-        <div style={{
-          position: 'fixed',
-          bottom: '1rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: '#222',
-          color: 'white',
-          padding: '0.75rem 1.25rem',
-          borderRadius: '10px',
-          fontSize: '1rem',
-          zIndex: 9999,
-          boxShadow: '0 0 10px rgba(0,0,0,0.5)'
-        }}>
-          {micStatus}
-        </div>
-      )}
-    </>
-  ) : null;
+return accessGranted ? (
+  <>
+    {/* ✅ Full layout START */}
+    <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
+      {/* Left panel, center panel, right panel go here */}
+    </div>
+
+    {/* ✅ Mic Status Floating Box */}
+    {isVerifying && (
+      <div style={{
+        position: 'fixed',
+        bottom: '1rem',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: '#222',
+        color: 'white',
+        padding: '0.75rem 1.25rem',
+        borderRadius: '10px',
+        fontSize: '1rem',
+        zIndex: 9999,
+        boxShadow: '0 0 10px rgba(0,0,0,0.5)'
+      }}>
+        {micStatus}
+      </div>
+    )}
+  </>
+) : null;
 }
 
 async function fetchReplyFromBackend(character, message, memory, userName = "Friend", userGender = "unspecified") {
