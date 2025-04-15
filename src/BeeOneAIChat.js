@@ -33,7 +33,7 @@ function BeeOneAIChat() {
   const voiceWords = ["sunflower", "echo", "crystal", "mirror", "nebula", "horizon", "flame", "ocean"];
   const [attemptsLeft, setAttemptsLeft] = useState(2);
 
- useEffect(() => {
+useEffect(() => {
   const identity = JSON.parse(localStorage.getItem("novaIdentity"));
 
   if (!identity) {
@@ -55,7 +55,6 @@ function BeeOneAIChat() {
     localStorage.setItem("novaIdentity", JSON.stringify({ name: firstName, voiceWords: chosenWords }));
     localStorage.setItem(`novaMemory-${firstName}`, JSON.stringify([]));
 
-    // 🔊 Speak + show message + start mic all at once
     setUserName(firstName);
     setChatHistory([]);
     setMicStatus(`🎙️ Please say the word: "${challengeWord}"`);
@@ -89,7 +88,7 @@ function BeeOneAIChat() {
       setIsVerifying(false);
     };
 
-    setTimeout(() => recognition.start(), 100); // ✅ Force React to render message first
+    setTimeout(() => recognition.start(), 100); // Give React time to render prompt
   }
 }, []);
 
