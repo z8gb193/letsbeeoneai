@@ -61,7 +61,28 @@ function BeeOneAIChat() {
   utterance.lang = selectedVoice.lang;
   utterance.rate = 1.4;
   utterance.pitch = 1.1;
-     window.speechSynthesis.cancel();
+
+  window.speechSynthesis.cancel();
+  setIsSpeaking(true);
+
+  if (videoRef.current) {
+    videoRef.current.currentTime = 0;
+    videoRef.current.play().catch((e) => console.warn("Video play failed:", e));
+  }
+
+  window.speechSynthesis.speak(utterance);
+
+  utterance.onend = () => {
+    setIsSpeaking(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+  };
+};
+
+
+
+    
 setIsSpeaking(true);
 window.speechSynthesis.speak(utterance);
 
