@@ -70,7 +70,7 @@ function BeeOneAIChat() {
       setUserName(identity.firstName);
       setChatHistory(savedHistory);
       setAccessGranted(true);
-    } else {
+     } else {
       alert("Hmm... that didn’t sound quite right. Here’s one clue: it starts with \"" + identity.codeWord[0].toUpperCase() + "\"");
       const secondTry = prompt("Try again. What’s your code word?");
       if (identity.codeWord.toLowerCase() === secondTry?.trim().toLowerCase()) {
@@ -79,13 +79,15 @@ function BeeOneAIChat() {
         setChatHistory(savedHistory);
         setAccessGranted(true);
       } else {
-       alert("🚫 Locked out. Please wait 2 minutes before trying again.\nIf you're having trouble remembering your code word, email: deanopatent@hotmail.co.uk");
+        alert("🚫 Locked out. Please wait 2 minutes before trying again.\nIf you're having trouble remembering your code word, email: deanopatent@hotmail.co.uk");
         setTimeout(() => {
           window.location.reload();
         }, 120000); // 2 minutes lockout
         return;
-        }
-}
+      }
+    }
+  }
+}, []);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
