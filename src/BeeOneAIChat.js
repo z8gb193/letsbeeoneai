@@ -49,30 +49,45 @@ function BeeOneAIChat() {
   const speak = (text) => {
     if (!window.speechSynthesis) return;
     const synth = window.speechSynthesis;
-    const voices = synth.getVoices();
-    const selectedVoice = voices.find(v => v.name === 'Microsoft Libby Online (Natural)') ||
-                        voices.find(v => v.lang === 'en-GB' && v.name.toLowerCase().includes('female')) ||
-                        voices.find(v => v.lang === 'en-GB') ||
-                        voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female')) ||
-                        voices.find(v => v.lang.startsWith('en')) ||
-                        voices[0];
 
-    const segments = text.split(/(\.\.\.|\.|,|!|\?|
-)/g).filter(Boolean); // split by natural pauses
+    const speakWithVoice = () => {
+      const voices = synth.getVoices();
+      const selectedVoice = voices.find(v => v.name === 'Microsoft Libby Online (Natural)') ||
+                            voices.find(v => v.lang === 'en-GB' && v.name.toLowerCase().includes('female')) ||
+                            voices.find(v => v.lang === 'en-GB') ||
+                            voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female')) ||
+                            voices.find(v => v.lang.startsWith('en')) ||
+                            voices[0];
 
-    const speakNext = (index) => {
-      if (index >= segments.length) return;
+      const segments = text.split(/(\.\.\.|\.|,|!|\?|
+)/g).filter(Boolean);
 
-      const utter = new SpeechSynthesisUtterance(segments[index]);
-      utter.voice = selectedVoice;
-      utter.lang = selectedVoice?.lang || 'en-GB';
-      utter.rate = 1;
-      utter.pitch = 1;
+      const speakNext = (index) => {
+        if (index >= segments.length) return;
 
-      utter.onend = () => {
-        // Pause for natural rhythm
-        setTimeout(() => speakNext(index + 1), 800 + Math.random() * 1500); // 0.8s–2.3s pause
+        const utter = new SpeechSynthesisUtterance(segments[index]);
+        utter.voice = selectedVoice;
+        utter.lang = selectedVoice?.lang || 'en-GB';
+        utter.rate = 1;
+        utter.pitch = 1;
+
+        utter.onend = () => {
+          setTimeout(() => speakNext(index + 1), 800 + Math.random() * 1500);
+        };
+
+        synth.speak(utter);
       };
+
+      synth.cancel();
+      speakNext(0);
+    };
+
+    if (synth.getVoices().length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => speakWithVoice();
+    } else {
+      speakWithVoice();
+    }
+};
 
       synth.speak(utter);
     };
@@ -230,4 +245,7 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
+
+
+
 
