@@ -195,7 +195,7 @@ function BeeOneAIChat() {
       <div style={{ width: '300px', background: '#f0f0f0', padding: '10px', borderLeft: '1px solid #ccc' }}>
         <video
           ref={videoRef}
-          src="/videos/nova_idle.mp4"
+          src="/videos/NovaTalk1.mp4"
           autoPlay
           muted
           loop
