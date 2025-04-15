@@ -33,29 +33,31 @@ function BeeOneAIChat() {
   const voiceWords = ["sunflower", "echo", "crystal", "mirror", "nebula", "horizon", "flame", "ocean"];
   const [attemptsLeft, setAttemptsLeft] = useState(2);
 
-  useEffect(() => {
+ useEffect(() => {
   const identity = JSON.parse(localStorage.getItem("novaIdentity"));
 
   if (!identity) {
-    const name = prompt("Hi, I’m Nova 💛 What’s your name?");
+    const name = prompt("Hi, I’m Nova 💛 What’s your first name?");
+    const firstName = name?.trim().split(" ")[0];
+
+    if (!firstName) {
+      alert("Name required to continue.");
+      return;
+    }
+
     const chosenWords = [];
     while (chosenWords.length < 3) {
       const word = voiceWords[Math.floor(Math.random() * voiceWords.length)];
       if (!chosenWords.includes(word)) chosenWords.push(word);
     }
 
-    alert(`Say these words out loud now:\n${chosenWords.join(", ")}`);
-    localStorage.setItem("novaIdentity", JSON.stringify({ name, voiceWords: chosenWords }));
-    localStorage.setItem(`novaMemory-${name}`, JSON.stringify([]));
-    setUserName(name);
-    setChatHistory([]);
-    setAccessGranted(true);
-  } else {
-    const inputName = prompt("Welcome back! Please enter your name to continue:");
-    const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${inputName}`)) || [];
-    const challengeWord = identity.voiceWords[Math.floor(Math.random() * identity.voiceWords.length)];
+    const challengeWord = chosenWords[Math.floor(Math.random() * chosenWords.length)];
+    localStorage.setItem("novaIdentity", JSON.stringify({ name: firstName, voiceWords: chosenWords }));
+    localStorage.setItem(`novaMemory-${firstName}`, JSON.stringify([]));
 
-    // ✅ Set visual prompt + speak BEFORE mic starts
+    // 🔊 Speak + show message + start mic all at once
+    setUserName(firstName);
+    setChatHistory([]);
     setMicStatus(`🎙️ Please say the word: "${challengeWord}"`);
     setIsVerifying(true);
     speak(`Please say the word: ${challengeWord}`);
@@ -71,37 +73,23 @@ function BeeOneAIChat() {
       console.log("User said:", spokenWord);
 
       if (spokenWord.includes(challengeWord.toLowerCase())) {
-        setUserName(inputName);
-        setChatHistory(savedHistory);
         setAccessGranted(true);
       } else {
-        if (attemptsLeft > 1) {
-          alert("Hmm... that didn’t sound quite right. Try again.");
-          setAttemptsLeft(prev => prev - 1);
-          window.location.reload();
-        } else {
-          alert("🚫 Access denied. Voice verification failed.");
-          document.body.innerHTML = `
-            <div style="text-align:center;margin-top:20vh;">
-              <h2>🚫 Locked Out</h2>
-              <p>Nova could not verify your identity. Access has been blocked.</p>
-            </div>`;
-          throw new Error("Unauthorized access");
-        }
+        alert("Hmm... that didn’t sound quite right. Try again.");
+        window.location.reload();
       }
 
-      // ✅ Clear the visual after result
-      setMicStatus("");
       setIsVerifying(false);
+      setMicStatus("");
     };
 
     recognition.onerror = (event) => {
       console.error("Mic error:", event.error);
-      setMicStatus("🚫 Mic access failed. Please allow microphone use.");
+      setMicStatus("🚫 Mic access failed.");
       setIsVerifying(false);
     };
 
-    recognition.start();
+    setTimeout(() => recognition.start(), 100); // ✅ Force React to render message first
   }
 }, []);
 
