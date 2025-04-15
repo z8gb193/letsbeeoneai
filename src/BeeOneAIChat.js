@@ -34,63 +34,50 @@ function BeeOneAIChat() {
   const [attemptsLeft, setAttemptsLeft] = useState(2);
 
   useEffect(() => {
-    const identity = JSON.parse(localStorage.getItem("novaIdentity"));
-    if (!identity) {
-      const name = prompt("Hi, I’m Nova 💛 What’s your name?");
-      const chosenWords = [];
-      while (chosenWords.length < 3) {
-        const word = voiceWords[Math.floor(Math.random() * voiceWords.length)];
-        if (!chosenWords.includes(word)) chosenWords.push(word);
-      }
-      alert(`Say these words out loud now:\n${chosenWords.join(", ")}`);
-      localStorage.setItem("novaIdentity", JSON.stringify({ name, voiceWords: chosenWords }));
-      localStorage.setItem(`novaMemory-${name}`, JSON.stringify([]));
-      setUserName(name);
-      setChatHistory([]);
-      setAccessGranted(true);
+   const inputName = prompt("Welcome back! Please enter your name to continue:");
+const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${inputName}`)) || [];
+const challengeWord = identity.voiceWords[Math.floor(Math.random() * identity.voiceWords.length)];
+
+setMicStatus(`🎙️ Please say the word: "${challengeWord}"`);
+setIsVerifying(true);
+speak(`Please say the word: ${challengeWord}`); // 🔊 Nova speaks
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
+recognition.lang = "en-US";
+recognition.interimResults = false;
+recognition.maxAlternatives = 1;
+
+recognition.onresult = (event) => {
+  const spokenWord = event.results[0][0].transcript.trim().toLowerCase();
+  console.log("User said:", spokenWord);
+  setIsVerifying(false);
+  setMicStatus("");
+
+  if (spokenWord.includes(challengeWord.toLowerCase())) {
+    setUserName(inputName);
+    setChatHistory(savedHistory);
+    setAccessGranted(true);
+  } else {
+    if (attemptsLeft > 1) {
+      alert("Hmm... that didn’t sound quite right. Try again.");
+      setAttemptsLeft(prev => prev - 1);
+      window.location.reload();
     } else {
-      const inputName = prompt("Welcome back! Please enter your name to continue:");
-      const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${inputName}`)) || [];
-      const challengeWord = identity.voiceWords[Math.floor(Math.random() * identity.voiceWords.length)];
-      setMicStatus(`🎙️ Please say the word: "${challengeWord}"`);
-      setIsVerifying(true);
+      alert("🚫 Access denied. Voice verification failed.");
+      document.body.innerHTML = `<div style="text-align:center;margin-top:20vh;"><h2>🚫 Locked Out</h2><p>Nova could not verify your identity. Access has been blocked.</p></div>`;
+      throw new Error("Unauthorized access");
+    }
+  }
+};
 
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.lang = "en-US";
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
+recognition.onerror = (event) => {
+  console.error("Mic error:", event.error);
+  setMicStatus("🚫 Mic access failed. Please allow microphone use.");
+  setIsVerifying(false);
+};
 
-      recognition.onresult = (event) => {
-        const spokenWord = event.results[0][0].transcript.trim().toLowerCase();
-        console.log("User said:", spokenWord);
-        setIsVerifying(false);
-        setMicStatus("");
-
-        if (spokenWord.includes(challengeWord.toLowerCase())) {
-          setUserName(inputName);
-          setChatHistory(savedHistory);
-          setAccessGranted(true);
-        } else {
-          if (attemptsLeft > 1) {
-            alert("Hmm... that didn’t sound quite right. Try again.");
-            setAttemptsLeft(prev => prev - 1);
-            window.location.reload();
-          } else {
-            alert("🚫 Access denied. Voice verification failed.");
-            document.body.innerHTML = `<div style="text-align:center;margin-top:20vh;"><h2>🚫 Locked Out</h2><p>Nova could not verify your identity. Access has been blocked.</p></div>`;
-            throw new Error("Unauthorized access");
-          }
-        }
-      };
-
-      recognition.onerror = (event) => {
-        console.error("Mic error:", event.error);
-        setMicStatus("🚫 Mic access failed. Please allow microphone use.");
-        setIsVerifying(false);
-      };
-
-      recognition.start();
+recognition.start();
     }
   }, []);
 
