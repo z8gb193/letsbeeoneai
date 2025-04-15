@@ -46,35 +46,7 @@ function BeeOneAIChat() {
     if (sender === "Nova") speak(text);
   };
 
-  const speak = (text) => {
-  if (!window.speechSynthesis) {
-    console.warn('Speech synthesis not supported in this browser.');
-    return;
-  }
-
-  const synth = window.speechSynthesis;
-
-  const speakWithVoice = () => {
-    const voices = synth.getVoices();
-    const selectedVoice = voices.find(v => v.name === 'Google UK English Female');
-
-    if (!selectedVoice) {
-      console.warn('Google UK English Female voice not available.');
-      return;
-    }
-
-    console.log('Using voice:', selectedVoice.name);
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = selectedVoice;
-    utterance.lang = selectedVoice.lang;
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    utterance.onerror = (e) => console.error('Speech error:', e);
-
-    synth.cancel();
-    synth.speak(utterance);
-  };
+  
 
   
   } else {
