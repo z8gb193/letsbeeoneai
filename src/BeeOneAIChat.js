@@ -47,32 +47,46 @@ function BeeOneAIChat() {
   };
 
   const speak = (text) => {
-    if (!window.speechSynthesis) return;
-    const synth = window.speechSynthesis;
+  if (!window.speechSynthesis) {
+    console.warn('Speech synthesis not supported in this browser.');
+    return;
+  }
 
-    const speakWithVoice = () => {
-      const voices = synth.getVoices();
-      const selectedVoice = voices.find(v =>
-        v.name === 'Google UK English Female' ||
-        v.name === 'Microsoft Libby Online (Natural)' ||
-        v.name.toLowerCase().includes('female')
-      ) || voices[0];
+  const synth = window.speechSynthesis;
 
-      const segments = text.split(/(\.\.\.|\.|,|!|\?|
-)/g).filter(Boolean);
+  const speakWithVoice = () => {
+    const voices = synth.getVoices();
+    if (!voices.length) {
+      console.warn('No voices available.');
+      return;
+    }
 
-      const speakNext = (index) => {
-        if (index >= segments.length) return;
+    console.log('Available voices:', voices.map(v => `${v.name} [${v.lang}]`));
 
-        const utter = new SpeechSynthesisUtterance(segments[index]);
-        utter.voice = selectedVoice;
-        utter.lang = selectedVoice?.lang || 'en-GB';
-        utter.rate = 1;
-        utter.pitch = 1;
+    const selectedVoice = voices.find(v => v.name === 'Google UK English Female') || voices[0];
 
-        utter.onend = () => {
-          setTimeout(() => speakNext(index + 1), 800 + Math.random() * 1500);
-        };
+    console.log('Selected voice:', selectedVoice?.name);
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.voice = selectedVoice;
+    utterance.lang = selectedVoice?.lang || 'en-US';
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.onerror = (e) => console.error('Speech error:', e);
+
+    synth.cancel();
+    synth.speak(utterance);
+  };
+
+  if (synth.getVoices().length) {
+    speakWithVoice();
+  } else {
+    synth.onvoiceschanged = () => {
+      synth.onvoiceschanged = null;
+      speakWithVoice();
+    };
+  }
+};
 
         synth.speak(utter);
       };
