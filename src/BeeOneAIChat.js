@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const novaImages = [
   '/avatars/Nova.png',
-  '/avatars/Nova1.png',
   '/avatars/Nova2.png',
   '/avatars/Nova3.png',
   '/avatars/Nova4.png',
@@ -16,8 +15,7 @@ function ChatMessage({ message }) {
       {message.content}
     </div>
   );
-
-      {/* Voice Selector */}
+}
       <div style={{ position: 'fixed', top: '10px', left: '220px', background: '#fff', zIndex: 9999, padding: '10px', border: '1px solid #ccc', borderRadius: '8px' }}>
         <strong>Select Nova's Voice:</strong>
         <select
@@ -296,3 +294,4 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
+
