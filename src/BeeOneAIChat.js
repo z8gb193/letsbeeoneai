@@ -1,3 +1,4 @@
+// FULL UPDATED BeeOneAIChat.js
 import React, { useState, useEffect, useRef } from 'react';
 
 const aiCharacters = {
@@ -33,8 +34,52 @@ function BeeOneAIChat() {
   const voiceWords = ["sunflower", "echo", "crystal", "mirror", "nebula", "horizon", "flame", "ocean"];
   const [attemptsLeft, setAttemptsLeft] = useState(2);
 
-useEffect(() => {
+  useEffect(() => {
   const identity = JSON.parse(localStorage.getItem("novaIdentity"));
+
+  const startVoiceCheck = (challengeWord, firstName, savedHistory) => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+      const spokenWord = event.results[0][0].transcript.trim().toLowerCase();
+      console.log("User said:", spokenWord);
+
+      if (spokenWord.includes(challengeWord.toLowerCase())) {
+        setAccessGranted(true);
+        setUserName(firstName);
+        setChatHistory(savedHistory);
+      } else {
+        if (attemptsLeft > 1) {
+          alert("Hmm... that didn’t sound quite right. Try again.");
+          setAttemptsLeft(prev => prev - 1);
+          window.location.reload();
+        } else {
+          alert("🚫 Access denied. Voice verification failed.");
+          document.body.innerHTML = `
+            <div style="text-align:center;margin-top:20vh;">
+              <h2>🚫 Locked Out</h2>
+              <p>Nova could not verify your identity. Access has been blocked.</p>
+            </div>`;
+          throw new Error("Unauthorized access");
+        }
+      }
+
+      setIsVerifying(false);
+      setMicStatus("");
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Mic error:", event.error);
+      setMicStatus("🚫 Mic access failed.");
+      setIsVerifying(false);
+    };
+
+    setTimeout(() => recognition.start(), 300);
+  };
 
   if (!identity) {
     const name = prompt("Hi, I’m Nova 💛 What’s your first name?");
@@ -55,42 +100,22 @@ useEffect(() => {
     localStorage.setItem("novaIdentity", JSON.stringify({ name: firstName, voiceWords: chosenWords }));
     localStorage.setItem(`novaMemory-${firstName}`, JSON.stringify([]));
 
-    setUserName(firstName);
-    setChatHistory([]);
     setMicStatus(`🎙️ Please say the word: "${challengeWord}"`);
     setIsVerifying(true);
     speak(`Please say the word: ${challengeWord}`);
+    startVoiceCheck(challengeWord, firstName, []);
+  } else {
+    const inputName = prompt("Welcome back! What’s your first name?");
+    const savedHistory = JSON.parse(localStorage.getItem(`novaMemory-${inputName}`)) || [];
+    const challengeWord = identity.voiceWords[Math.floor(Math.random() * identity.voiceWords.length)];
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onresult = (event) => {
-      const spokenWord = event.results[0][0].transcript.trim().toLowerCase();
-      console.log("User said:", spokenWord);
-
-      if (spokenWord.includes(challengeWord.toLowerCase())) {
-        setAccessGranted(true);
-      } else {
-        alert("Hmm... that didn’t sound quite right. Try again.");
-        window.location.reload();
-      }
-
-      setIsVerifying(false);
-      setMicStatus("");
-    };
-
-    recognition.onerror = (event) => {
-      console.error("Mic error:", event.error);
-      setMicStatus("🚫 Mic access failed.");
-      setIsVerifying(false);
-    };
-
-    setTimeout(() => recognition.start(), 100); // Give React time to render prompt
+    setMicStatus(`🎙️ Please say the word: "${challengeWord}"`);
+    setIsVerifying(true);
+    speak(`Please say the word: ${challengeWord}`);
+    startVoiceCheck(challengeWord, inputName, savedHistory);
   }
-}, []);
+    }
+  }, []);
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -182,33 +207,30 @@ useEffect(() => {
     });
   };
 
-return accessGranted ? (
-  <>
-    {/* ✅ Full layout START */}
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      {/* Left panel, center panel, right panel go here */}
-    </div>
+  return accessGranted ? (
+    <>
+      {/* Existing layout here... */}
 
-    {/* ✅ Mic Status Floating Box */}
-    {isVerifying && (
-      <div style={{
-        position: 'fixed',
-        bottom: '1rem',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        backgroundColor: '#222',
-        color: 'white',
-        padding: '0.75rem 1.25rem',
-        borderRadius: '10px',
-        fontSize: '1rem',
-        zIndex: 9999,
-        boxShadow: '0 0 10px rgba(0,0,0,0.5)'
-      }}>
-        {micStatus}
-      </div>
-    )}
-  </>
-) : null;
+      {/* Mic Status Indicator */}
+      {isVerifying && (
+        <div style={{
+          position: 'fixed',
+          bottom: '1rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#222',
+          color: 'white',
+          padding: '0.75rem 1.25rem',
+          borderRadius: '10px',
+          fontSize: '1rem',
+          zIndex: 9999,
+          boxShadow: '0 0 10px rgba(0,0,0,0.5)'
+        }}>
+          {micStatus}
+        </div>
+      )}
+    </>
+  ) : null;
 }
 
 async function fetchReplyFromBackend(character, message, memory, userName = "Friend", userGender = "unspecified") {
@@ -236,3 +258,4 @@ async function fetchReplyFromBackend(character, message, memory, userName = "Fri
 }
 
 export default BeeOneAIChat;
+
