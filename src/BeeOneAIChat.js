@@ -255,7 +255,12 @@ function BeeOneAIChat() {
         </div>
 
         {/* Right Panel – Nova Video */}
-        <div style={{ width: '250px', padding: '1rem', borderLeft: '1px solid #ddd', textAlign: 'center' }}>
+        style={{
+  width: '125px', // previously 250px
+  padding: '0.5rem',
+  borderLeft: '1px solid #ddd',
+  textAlign: 'center'
+}}
           <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>🎥 Nova Talking</p>
           <video
             src="/videos/NovaTalk1.mp4"
