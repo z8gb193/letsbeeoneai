@@ -46,7 +46,6 @@ function BeeOneAIChat() {
   const [memory, setMemory] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const videoRef = useRef(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = SpeechRecognition ? new SpeechRecognition() : null;
@@ -90,10 +89,8 @@ function BeeOneAIChat() {
       };
 
       recognition.onend = () => {
-        if (!isSpeaking) {
-          console.log('Recognition restarting'); // Debug log
-          recognition.start();
-        }
+        console.log('Recognition restarting'); // Debug log
+        recognition.start();
       };
 
       recognition.onerror = (event) => {
@@ -137,27 +134,25 @@ function BeeOneAIChat() {
         return;
       }
 
+      // Stop recognition to prevent feedback
+      if (recognition) recognition.stop();
+
       // Cancel any ongoing speech
       window.speechSynthesis.cancel();
-
-      setIsSpeaking(true);
-      if (recognition) recognition.stop();
 
       const cleanedText = text.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
       const utterance = new SpeechSynthesisUtterance(cleanedText);
       utterance.voice = selectedVoice;
-      utterance.lang = 'en-US'; // Fallback to en-US
-      utterance.rate = 1.0; // Standard rate
-      utterance.pitch = 1.0; // Standard pitch
+      utterance.lang = 'en-US';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
 
       utterance.onend = () => {
         console.log('Finished speaking:', text); // Debug log
-        setIsSpeaking(false);
         if (recognition) recognition.start();
       };
       utterance.onerror = (event) => {
         console.error('Speech synthesis error:', event); // Debug log
-        setIsSpeaking(false);
         if (recognition) recognition.start();
       };
 
@@ -372,7 +367,7 @@ function BeeOneAIChat() {
               width: '150px',
               height: '200px',
               borderRadius: '12px',
-              opacity: isSpeaking ? 1 : 0.15,
+              opacity: 1, // Removed isSpeaking dependency
               transition: 'opacity 0.3s ease-in-out',
             }}
           />
