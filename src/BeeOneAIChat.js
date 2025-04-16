@@ -147,16 +147,20 @@ const speak = (textToSpeak) => {
 
 
 
-  const newMessage = { type: 'text', content: text, isUser: sender.toLowerCase() !== "nova" };
+const isNova = sender.toLowerCase?.() === "nova"; // safely handle case
+const newMessage = { type: 'text', content: text, isUser: !isNova };
 
-if (sender === "Nova") {
+if (isNova) {
   setTimeout(() => {
-    const pop = new Audio('/sounds/pop.mp3'); // make sure this file exists
-    pop.play();
-
+    try {
+      popSound.current.currentTime = 0;
+      popSound.current.play();
+    } catch (err) {
+      console.error("Pop sound error:", err);
+    }
     setMessages(prev => [...prev, newMessage]);
-    speak(text);
-  }, 2000); // 2-second delay
+    speak(text); // ✅ always speaks if it's Nova
+  }, 1000);
 } else {
   setMessages(prev => [...prev, newMessage]);
 }
