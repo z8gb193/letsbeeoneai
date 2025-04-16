@@ -47,6 +47,7 @@ function BeeOneAIChat() {
   const [selectedImage, setSelectedImage] = useState(null);
   const videoRef = useRef(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const popSound = useRef(new Audio('/sounds/pop.mp3'));
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = new SpeechRecognition();
@@ -129,6 +130,12 @@ function BeeOneAIChat() {
     const newMessage = { type: 'text', content: text, isUser: !isNova };
     if (isNova) {
       setTimeout(() => {
+        try {
+          popSound.current.currentTime = 0;
+          popSound.current.play();
+        } catch (err) {
+          console.error("Pop sound error:", err);
+        }
         setMessages(prev => [...prev, newMessage]);
         speak(text);
       }, 1000);
@@ -137,28 +144,57 @@ function BeeOneAIChat() {
     }
   };
 
-  const speakNow = (text) => {
-    const voice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
-    if (!voice) return;
-    const cleanedText = text.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '') || text;
-    if (!cleanedText.trim()) return;
-    const utterance = new SpeechSynthesisUtterance(cleanedText);
-    utterance.voice = voice;
-    utterance.lang = voice.lang;
-    utterance.rate = 1.15;
-    utterance.pitch = 1.05;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  };
-
   const handleUserMessage = (text) => {
     if (!text.trim()) return;
     addMessage("user", text);
+
+    if (setupStage === "askName") {
+      setUserName(text.trim());
+      setSetupStage("askAge");
+      addMessage("Nova", "Nice to meet you! How old are you?");
+      return;
+    }
+    if (setupStage === "askAge") {
+      setSetupStage("askMother");
+      addMessage("Nova", "What’s your mother’s first name?");
+      return;
+    }
+    if (setupStage === "askMother") {
+      setSetupStage("askPet");
+      addMessage("Nova", "What’s your pet’s name? (or say 'none')");
+      return;
+    }
+    if (setupStage === "askPet") {
+      setSetupStage("askCodeword");
+      addMessage("Nova", "Now choose a codeword you’ll remember. This will be your key next time! 🧠 Write it down now.");
+      return;
+    }
+    if (setupStage === "askCodeword") {
+      const identity = {
+        firstName: userName,
+        age: "?",
+        motherName: "?",
+        petName: "?",
+        codeWord: text.trim()
+      };
+      localStorage.setItem("novaIdentity", JSON.stringify(identity));
+      setSetupStage("complete");
+      addMessage("Nova", `Great! Your codeword is saved in my memory, ${userName}. Next time, I’ll ask for it before we start. 💾`);
+      return;
+    }
+    if (setupStage === "verify") {
+      const saved = JSON.parse(localStorage.getItem("novaIdentity"));
+      if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
+        setSetupStage("complete");
+        addMessage("Nova", `Access granted 💛 Welcome back, ${saved.firstName}! Let's get going.`);
+      } else {
+        addMessage("Nova", "Hmm... that’s not quite right. Until I get the correct codeword, things might be a bit... slow. 😶‍🌫️ Try again?");
+      }
+      return;
+    }
+
     fetchReplyFromBackend("nova", text, memory, userName, "female").then((replyText) => {
       addMessage("Nova", replyText);
-      setTimeout(() => {
-        speakNow(replyText);
-      }, 1100);
     });
   };
 
@@ -184,7 +220,7 @@ function BeeOneAIChat() {
     }
   };
 
-  // [Your existing voiceSelector and return JSX remains untouched]
+  // JSX return and voiceSelector logic follows...
 }
 
 export default BeeOneAIChat;
