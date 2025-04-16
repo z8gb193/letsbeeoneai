@@ -55,34 +55,37 @@ function BeeOneAIChat() {
     recognition.continuous = true;
     recognition.interimResults = false;
   }
-
+const isSpeakingRef = useRef(false); // Track Nova's speaking state
 useEffect(() => {
-  // Load voices
   const synth = window.speechSynthesis;
+
   const loadVoices = () => {
     const voices = synth.getVoices();
     setAvailableVoices(voices);
-    console.log('Loaded voices:', voices.map(v => v.name)); // Debug log
-    // Set first voice as default if none selected
+    console.log('Loaded voices:', voices.map(v => v.name));
     if (voices.length && !novaVoiceName) {
       const firstVoice = voices[0].name;
       setNovaVoiceName(firstVoice);
       localStorage.setItem('novaVoice', firstVoice);
-      console.log('Set default voice:', firstVoice); // Debug log
+      console.log('Set default voice:', firstVoice);
     }
   };
+
   if (synth.onvoiceschanged !== undefined) {
     synth.onvoiceschanged = loadVoices;
   }
   loadVoices();
 
-  // Speech recognition
   if (recognition) {
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
     recognition.onresult = (event) => {
       const lastResult = event.results[event.results.length - 1];
       if (lastResult.isFinal) {
         const transcript = lastResult[0].transcript.trim();
-        console.log('Speech transcript:', transcript); // Debug log
+        console.log('Speech transcript:', transcript);
         if (transcript) {
           handleUserMessage(transcript);
         }
@@ -90,23 +93,26 @@ useEffect(() => {
     };
 
     recognition.onspeechstart = () => {
-      console.log('User started speaking — stopping Nova'); // Debug log
-      window.speechSynthesis.cancel(); // Instantly stop Nova speaking
+      console.log('User started speaking — checking if Nova is speaking...');
+      if (isSpeakingRef.current) {
+        console.log('Nova is speaking — stopping her now');
+        window.speechSynthesis.cancel();
+        isSpeakingRef.current = false;
+      }
     };
 
     recognition.onend = () => {
-      console.log('Recognition restarting'); // Debug log
+      console.log('Recognition restarting');
       recognition.start();
     };
 
     recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error); // Debug log
+      console.error('Speech recognition error:', event.error);
     };
 
     recognition.start();
   }
 
-  // Initial setup
   const identity = JSON.parse(localStorage.getItem('novaIdentity'));
   if (identity && identity.codeWord) {
     setUserName(identity.firstName);
@@ -117,7 +123,6 @@ useEffect(() => {
     addMessage('Nova', 'Hi! I’m Nova 💛 What’s your name?');
   }
 
-  // Cleanup
   return () => {
     if (recognition) recognition.stop();
     synth.cancel();
@@ -147,11 +152,23 @@ useEffect(() => {
       window.speechSynthesis.cancel();
 
       const cleanedText = text.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
-      const utterance = new SpeechSynthesisUtterance(cleanedText);
-      utterance.voice = selectedVoice;
-      utterance.lang = 'en-US';
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
+   const utterance = new SpeechSynthesisUtterance(cleanedText);
+utterance.voice = selectedVoice;
+utterance.lang = 'en-US';
+utterance.rate = 1.0;
+utterance.pitch = 1.0;
+
+isSpeakingRef.current = true;
+
+utterance.onend = () => {
+  isSpeakingRef.current = false;
+  if (recognition) recognition.start();
+};
+
+utterance.onerror = () => {
+  isSpeakingRef.current = false;
+  if (recognition) recognition.start();
+};
 
       utterance.onend = () => {
         console.log('Finished speaking:', text); // Debug log
