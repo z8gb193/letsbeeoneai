@@ -71,15 +71,37 @@ function BeeOneAIChat() {
     }
     loadVoices();
 
-    if (recognition) {
-      recognition.onresult = (event) => {
-        const lastResult = event.results[event.results.length - 1];
-        if (lastResult.isFinal) {
-          const transcript = lastResult[0].transcript.trim();
-          console.log('Speech transcript:', transcript); // Debug log
-          if (transcript) {
-            handleUserMessage(transcript);
-          }
+
+if (SpeechRecognition) {
+  recognitionRef.current = new SpeechRecognition();
+  recognitionRef.current.lang = 'en-US';
+  recognitionRef.current.continuous = true;
+  recognitionRef.current.interimResults = false;
+
+  recognitionRef.current.onresult = (event) => {
+    const lastResult = event.results[event.results.length - 1];
+    if (lastResult.isFinal) {
+      const transcript = lastResult[0].transcript.trim();
+      console.log('Speech transcript:', transcript);
+      if (transcript) {
+        handleUserMessage(transcript);
+      }
+    }
+  };
+
+  recognitionRef.current.onend = () => {
+    console.log('Recognition restarting');
+    recognitionRef.current.start();
+  };
+
+  recognitionRef.current.onerror = (event) => {
+    console.error('Speech recognition error:', event.error);
+  };
+
+  recognitionRef.current.start();
+}
+
+    
         }
       };
 
