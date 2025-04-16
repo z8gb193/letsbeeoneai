@@ -238,7 +238,7 @@ if (isNova) {
     }
 
     fetchReplyFromBackend("nova", text, memory, userName, "female").then(replyText => {
-      addMessage("Nova", replyText);
+      addMessage("nova", replyText); // ✅ lowercase to guarantee match
     });
   };
 
