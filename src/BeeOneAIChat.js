@@ -57,21 +57,29 @@ function BeeOneAIChat() {
 const speak = (textToSpeak) => {
   if (!window.speechSynthesis || !selectedVoice) return;
 
-  const parts = textToSpeak.split(/(?<=[.?!])\s+/); // split by sentence
+  // ✅ Strip emojis (covers most standard emojis)
+  const cleanedText = textToSpeak.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
+
+  // Split cleaned text into sentences
+  const parts = cleanedText.split(/(?<=[.?!])\s+/);
 
   const speakNext = (index) => {
     if (index >= parts.length) return;
 
-    const sentence = parts[index];
+    const sentence = parts[index].trim();
+    if (!sentence) {
+      speakNext(index + 1); // skip empty lines
+      return;
+    }
+
     const utterance = new SpeechSynthesisUtterance(sentence);
     utterance.voice = selectedVoice;
     utterance.lang = selectedVoice.lang;
 
-    // base expression
+    // 🎭 Add emotional flavor
     utterance.rate = 1.15;
     utterance.pitch = 1.05;
 
-    // add expressive boost
     const lower = sentence.toLowerCase();
     if (lower.includes("love") || lower.includes("miss")) {
       utterance.pitch = 1.25;
@@ -97,6 +105,8 @@ const speak = (textToSpeak) => {
   window.speechSynthesis.cancel();
   speakNext(0);
 };
+
+
 
   const newMessage = { type: 'text', content: text, isUser: sender !== "Nova" };
   setMessages(prev => [...prev, newMessage]);
