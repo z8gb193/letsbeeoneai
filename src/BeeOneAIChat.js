@@ -259,11 +259,13 @@ const speakNow = (text) => {
       return;
     }
 
-fetchReplyFromBackend("nova", text, memory, userName, "female").then(replyText => {
-  addMessage("Nova", replyText); // this adds message to chat
+fetchReplyFromBackend("nova", text, memory, userName, "female").then((replyText) => {
+  addMessage("Nova", replyText);
 
-  // ❗ Nova must also speak here directly
-  speakNow(replyText);
+  // 🗣️ Always speak Nova's reply after showing message
+  setTimeout(() => {
+    speakNow(replyText);
+  }, 1100);
 });
 
   // 🔊 Speak Nova's reply EVERY time, no matter what triggered it
