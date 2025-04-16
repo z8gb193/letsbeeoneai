@@ -149,10 +149,34 @@ useEffect(() => {
       if (recognition) recognition.stop();
 
       // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
+window.speechSynthesis.cancel();
 
-      const cleanedText = text.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
-   const utterance = new SpeechSynthesisUtterance(cleanedText);
+const cleanedText = text.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
+
+setTimeout(() => {
+  const utterance = new SpeechSynthesisUtterance(cleanedText);
+  utterance.voice = selectedVoice;
+  utterance.lang = 'en-US';
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+
+  isSpeakingRef.current = true;
+
+  utterance.onend = () => {
+    isSpeakingRef.current = false;
+    if (recognition) recognition.start();
+  };
+
+  utterance.onerror = () => {
+    isSpeakingRef.current = false;
+    if (recognition) recognition.start();
+  };
+
+  window.speechSynthesis.speak(utterance);
+}, 300); // ← delay ensures TTS works after voice input
+
+
+      
 utterance.voice = selectedVoice;
 utterance.lang = 'en-US';
 utterance.rate = 1.0;
