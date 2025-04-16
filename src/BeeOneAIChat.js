@@ -195,9 +195,11 @@ function BeeOneAIChat() {
     }
   };
 
-  return (
-    <></>
-  );
+ return (
+  <div style={{ padding: '40px', fontSize: '24px', textAlign: 'center', color: '#222' }}>
+    🐝 Nova is alive! UI loaded. Now loading layout...
+  </div>
+);
 }
 
 export default BeeOneAIChat;
