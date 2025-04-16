@@ -141,6 +141,8 @@ if (sender === "Nova") {
   setMessages(prev => [...prev, newMessage]);
 }
 
+};
+
   const handleUserMessage = (text) => {
     if (!text.trim()) return;
     addMessage("user", text);
