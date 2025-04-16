@@ -40,7 +40,6 @@ function BeeOneAIChat() {
   const [memory, setMemory] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const videoRef = useRef(null);
-  const isSpeakingRef = useRef(false);
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = SpeechRecognition ? new SpeechRecognition() : null;
@@ -50,126 +49,6 @@ function BeeOneAIChat() {
     recognition.continuous = true;
     recognition.interimResults = false;
   }
-
-  const addMessage = (sender, text) => {
-    const isNova = sender.toLowerCase() === 'nova';
-    const newMessage = { type: 'text', content: text, isUser: !isNova };
-    setMessages((prev) => [...prev, newMessage]);
-
-    if (isNova && window.speechSynthesis) {
-      const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
-      if (!selectedVoice) return;
-
-      if (recognition) recognition.stop();
-      window.speechSynthesis.cancel();
-
-      const cleanedText = text.replace(/[\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF]/g, '');
-
-      setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(cleanedText);
-        utterance.voice = selectedVoice;
-        utterance.lang = 'en-US';
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-
-        isSpeakingRef.current = true;
-
-        utterance.onend = () => {
-          isSpeakingRef.current = false;
-          if (recognition) recognition.start();
-        };
-
-        utterance.onerror = () => {
-          isSpeakingRef.current = false;
-          if (recognition) recognition.start();
-        };
-
-        window.speechSynthesis.speak(utterance);
-      }, 250);
-    }
-  };
-
-  const fetchReplyFromBackend = async (character, message, memory, userName = 'Friend', userGender = 'unspecified') => {
-    try {
-      const response = await fetch('https://beeoneai-backend.onrender.com/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          character,
-          message,
-          memory: memory || [],
-          name: userName,
-          userId: 'default',
-          gender: userGender
-        })
-      });
-
-      const data = await response.json();
-      if (!data.reply) throw new Error('No reply returned from backend.');
-      return data.reply;
-    } catch (error) {
-      console.error('Backend error:', error);
-      return 'Nova is offline right now. Try again in a few minutes. 💛';
-    }
-  };
-
-  const handleUserMessage = (text) => {
-    if (!text.trim()) return;
-    addMessage('user', text);
-
-    if (setupStage === 'askName') {
-      setUserName(text.trim());
-      setSetupStage('askAge');
-      addMessage('Nova', 'Nice to meet you! How old are you?');
-      return;
-    }
-    if (setupStage === 'askAge') {
-      setSetupStage('askMother');
-      addMessage('Nova', 'What’s your mother’s first name?');
-      return;
-    }
-    if (setupStage === 'askMother') {
-      setSetupStage('askPet');
-      addMessage('Nova', 'What’s your pet’s name? (or say "none")');
-      return;
-    }
-    if (setupStage === 'askPet') {
-      setSetupStage('askCodeword');
-      addMessage('Nova', 'Now choose a codeword you’ll remember. This will be your key next time! 🧠 Write it down now.');
-      return;
-    }
-    if (setupStage === 'askCodeword') {
-      const identity = { firstName: userName, age: '?', motherName: '?', petName: '?', codeWord: text.trim() };
-      localStorage.setItem('novaIdentity', JSON.stringify(identity));
-      setSetupStage('complete');
-      addMessage('Nova', `Great! Your codeword is saved in my memory, ${userName}. Next time, I’ll ask for it before we start. 💾`);
-      return;
-    }
-    if (setupStage === 'verify') {
-      const saved = JSON.parse(localStorage.getItem('novaIdentity'));
-      if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
-        setSetupStage('complete');
-        addMessage('Nova', `Access granted 💛 Welcome back, ${saved.firstName}! Let's get going.`);
-      } else {
-        addMessage('Nova', 'Hmm... that’s not quite right. Until I get the correct codeword, things might be a bit... slow. 😶‍🌫️ Try again?');
-      }
-      return;
-    }
-
-    // ✅ Normal convo begins once setupStage is complete
-    if (setupStage === 'complete') {
-      fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
-        console.log('Backend reply:', replyText);
-
-        if (!replyText || typeof replyText !== 'string') {
-          addMessage('Nova', 'Oops... Something went wrong. Try again? 💛');
-          return;
-        }
-
-        addMessage('Nova', replyText);
-      });
-    }
-  };
 
   useEffect(() => {
     const synth = window.speechSynthesis;
@@ -216,6 +95,99 @@ function BeeOneAIChat() {
     };
   }, []);
 
+  const addMessage = (sender, text) => {
+    const isNova = sender.toLowerCase() === 'nova';
+    const newMessage = { type: 'text', content: text, isUser: !isNova };
+    setMessages((prev) => [...prev, newMessage]);
+
+    if (isNova && window.speechSynthesis) {
+      const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
+      if (!selectedVoice) return;
+
+      if (recognition) recognition.stop();
+      window.speechSynthesis.cancel();
+
+      const cleanedText = text.replace(/[\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF]/g, '');
+      const utterance = new SpeechSynthesisUtterance(cleanedText);
+      utterance.voice = selectedVoice;
+      utterance.lang = 'en-US';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      utterance.onend = () => {
+        if (recognition) recognition.start();
+      };
+      utterance.onerror = () => {
+        if (recognition) recognition.start();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const handleUserMessage = (text) => {
+    if (!text.trim()) return;
+    addMessage('user', text);
+
+    if (setupStage === 'askName') {
+      setUserName(text.trim());
+      setSetupStage('askAge');
+      addMessage('Nova', 'Nice to meet you! How old are you?');
+      return;
+    }
+    if (setupStage === 'askAge') {
+      setSetupStage('askMother');
+      addMessage('Nova', 'What’s your mother’s first name?');
+      return;
+    }
+    if (setupStage === 'askMother') {
+      setSetupStage('askPet');
+      addMessage('Nova', 'What’s your pet’s name? (or say "none")');
+      return;
+    }
+    if (setupStage === 'askPet') {
+      setSetupStage('askCodeword');
+      addMessage('Nova', 'Now choose a codeword you’ll remember. This will be your key next time! 🧠 Write it down now.');
+      return;
+    }
+    if (setupStage === 'askCodeword') {
+      const identity = { firstName: userName, age: '?', motherName: '?', petName: '?', codeWord: text.trim() };
+      localStorage.setItem('novaIdentity', JSON.stringify(identity));
+      setSetupStage('complete');
+      addMessage('Nova', `Great! Your codeword is saved in my memory, ${userName}. Next time, I’ll ask for it before we start. 💾`);
+      return;
+    }
+    if (setupStage === 'verify') {
+      const saved = JSON.parse(localStorage.getItem('novaIdentity'));
+      if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
+        setSetupStage('complete');
+        addMessage('Nova', `Access granted 💛 Welcome back, ${saved.firstName}! Let's get going.`);
+      } else {
+        addMessage('Nova', 'Hmm... that’s not quite right. Until I get the correct codeword, things might be a bit... slow. 😶‍🌫️ Try again?');
+      }
+      return;
+    }
+
+    fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
+      addMessage('Nova', replyText);
+    });
+  };
+
+  const fetchReplyFromBackend = async (character, message, memory, userName = 'Friend', userGender = 'unspecified') => {
+    try {
+      const response = await fetch('https://beeoneai-backend.onrender.com/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ character, message, memory, name: userName, userId: 'default', gender: userGender })
+      });
+      const data = await response.json();
+      return data.reply || 'Hmm... I didn’t quite get that.';
+    } catch (error) {
+      console.error('Backend error:', error);
+      return 'Hmm... Nova couldn’t connect just now.';
+    }
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleUserMessage(input);
@@ -229,4 +201,3 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
-
