@@ -46,10 +46,15 @@ function BeeOneAIChat() {
   const [memory, setMemory] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const videoRef = useRef(null);
-  const recognitionRef = useRef(null);
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
- 
+  const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+  if (recognition) {
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+  }
 
   useEffect(() => {
     // Load voices
@@ -71,37 +76,15 @@ function BeeOneAIChat() {
     }
     loadVoices();
 
-
-if (SpeechRecognition) {
-  recognitionRef.current = new SpeechRecognition();
-  recognitionRef.current.lang = 'en-US';
-  recognitionRef.current.continuous = true;
-  recognitionRef.current.interimResults = false;
-
-  recognitionRef.current.onresult = (event) => {
-    const lastResult = event.results[event.results.length - 1];
-    if (lastResult.isFinal) {
-      const transcript = lastResult[0].transcript.trim();
-      console.log('Speech transcript:', transcript);
-      if (transcript) {
-        handleUserMessage(transcript);
-      }
-    }
-  };
-
-  recognitionRef.current.onend = () => {
-    console.log('Recognition restarting');
-    recognitionRef.current.start();
-  };
-
-  recognitionRef.current.onerror = (event) => {
-    console.error('Speech recognition error:', event.error);
-  };
-
-  recognitionRef.current.start();
-}
-
-    
+    if (recognition) {
+      recognition.onresult = (event) => {
+        const lastResult = event.results[event.results.length - 1];
+        if (lastResult.isFinal) {
+          const transcript = lastResult[0].transcript.trim();
+          console.log('Speech transcript:', transcript); // Debug log
+          if (transcript) {
+            handleUserMessage(transcript);
+          }
         }
       };
 
@@ -143,28 +126,37 @@ if (SpeechRecognition) {
     setMessages((prev) => [...prev, newMessage]);
 
     // Speak all Nova messages
-    if (recognitionRef.current) recognitionRef.current.stop();
-window.speechSynthesis.cancel();
+    if (isNova && window.speechSynthesis) {
+      console.log('Attempting to speak:', text); // Debug log
+      const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
+      if (!selectedVoice) {
+        console.log('No voice available'); // Debug log
+        return;
+      }
 
-const cleanedText = text.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
-const utterance = new SpeechSynthesisUtterance(cleanedText);
-utterance.voice = selectedVoice;
-utterance.lang = 'en-US';
-utterance.rate = 1.0;
-utterance.pitch = 1.0;
+      // Stop recognition to prevent feedback
+      if (recognition) recognition.stop();
 
-utterance.onend = () => {
-  if (recognitionRef.current) recognitionRef.current.start();
-};
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
 
-utterance.onerror = () => {
-  if (recognitionRef.current) recognitionRef.current.start();
-};
+      const cleanedText = text.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
+      const utterance = new SpeechSynthesisUtterance(cleanedText);
+      utterance.voice = selectedVoice;
+      utterance.lang = 'en-US';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
 
-window.speechSynthesis.speak(utterance);
+      utterance.onend = () => {
+        console.log('Finished speaking:', text); // Debug log
+        if (recognition) recognition.start();
+      };
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event); // Debug log
+        if (recognition) recognition.start();
+      };
 
-      
-  
+      window.speechSynthesis.speak(utterance);
     }
   };
 
