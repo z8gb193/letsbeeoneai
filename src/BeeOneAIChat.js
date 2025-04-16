@@ -103,6 +103,7 @@ useEffect(() => {
   }
 }, []);
 
+
   const addMessage = (sender, text) => {
     const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
     const speak = (textToSpeak) => {
