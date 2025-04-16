@@ -47,7 +47,6 @@ function BeeOneAIChat() {
   const [selectedImage, setSelectedImage] = useState(null);
   const videoRef = useRef(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const popSound = useRef(new Audio('/sounds/pop.mp3')); // Assuming pop sound exists
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = SpeechRecognition ? new SpeechRecognition() : null;
@@ -58,72 +57,6 @@ function BeeOneAIChat() {
     recognition.interimResults = false;
   }
 
-  // Simplified speak function
-  const speak = (textToSpeak) => {
-    console.log('Attempting to speak:', textToSpeak); // Debug log
-    if (!textToSpeak || isSpeaking || !window.speechSynthesis) {
-      console.log('Speak aborted:', { textToSpeak, isSpeaking, hasSpeechSynthesis: !!window.speechSynthesis });
-      return;
-    }
-
-    const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
-    if (!selectedVoice) {
-      console.log('No voice selected');
-      return;
-    }
-
-    setIsSpeaking(true);
-    if (recognition) recognition.stop();
-
-    // Strip emojis
-    const cleanedText = textToSpeak.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
-
-    // Split into sentences
-    const parts = cleanedText.split(/(?<=[.?!])\s+/).filter(part => part.trim());
-
-    const speakNext = (index) => {
-      if (index >= parts.length) {
-        setIsSpeaking(false);
-        if (recognition) recognition.start();
-        console.log('Finished speaking');
-        return;
-      }
-
-      const sentence = parts[index];
-      const utterance = new SpeechSynthesisUtterance(sentence);
-      utterance.voice = selectedVoice;
-      utterance.lang = selectedVoice.lang;
-      utterance.rate = 1.15;
-      utterance.pitch = 1.05;
-
-      // Emotional flavor
-      const lower = sentence.toLowerCase();
-      if (lower.includes('love') || lower.includes('miss')) {
-        utterance.pitch = 1.25;
-        utterance.rate = 1.05;
-      } else if (lower.includes('hmm') || lower.includes('thinking')) {
-        utterance.pitch = 0.95;
-        utterance.rate = 0.9;
-      }
-
-      utterance.onend = () => {
-        const pause = sentence.endsWith('!') ? 400 : sentence.endsWith('?') ? 500 : 300;
-        setTimeout(() => speakNext(index + 1), pause);
-      };
-      utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event);
-        setIsSpeaking(false);
-        if (recognition) recognition.start();
-      };
-
-      console.log('Speaking sentence:', sentence); // Debug log
-      window.speechSynthesis.speak(utterance);
-    };
-
-    window.speechSynthesis.cancel();
-    speakNext(0);
-  };
-
   useEffect(() => {
     // Load voices
     const synth = window.speechSynthesis;
@@ -131,6 +64,13 @@ function BeeOneAIChat() {
       const voices = synth.getVoices();
       setAvailableVoices(voices);
       console.log('Loaded voices:', voices.map(v => v.name)); // Debug log
+      // Set first voice as default if none selected
+      if (voices.length && !novaVoiceName) {
+        const firstVoice = voices[0].name;
+        setNovaVoiceName(firstVoice);
+        localStorage.setItem('novaVoice', firstVoice);
+        console.log('Set default voice:', firstVoice); // Debug log
+      }
     };
     if (synth.onvoiceschanged !== undefined) {
       synth.onvoiceschanged = loadVoices;
@@ -168,12 +108,10 @@ function BeeOneAIChat() {
     if (identity && identity.codeWord) {
       setUserName(identity.firstName);
       setSetupStage('verify');
-      const message = 'Hey! What’s the codeword you gave me last time?';
-      addMessage('Nova', message);
+      addMessage('Nova', 'Hey! What’s the codeword you gave me last time?');
     } else {
       setSetupStage('askName');
-      const message = 'Hi! I’m Nova 💛 What’s your name?';
-      addMessage('Nova', message);
+      addMessage('Nova', 'Hi! I’m Nova 💛 What’s your name?');
     }
 
     // Cleanup
@@ -190,15 +128,40 @@ function BeeOneAIChat() {
 
     setMessages((prev) => [...prev, newMessage]);
 
-    if (isNova) {
-      // Play pop sound and speak immediately
-      try {
-        popSound.current.currentTime = 0;
-        popSound.current.play();
-      } catch (err) {
-        console.error('Pop sound error:', err);
+    // Speak all Nova messages
+    if (isNova && window.speechSynthesis) {
+      console.log('Attempting to speak:', text); // Debug log
+      const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
+      if (!selectedVoice) {
+        console.log('No voice available'); // Debug log
+        return;
       }
-      speak(text); // Speak immediately
+
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+
+      setIsSpeaking(true);
+      if (recognition) recognition.stop();
+
+      const cleanedText = text.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
+      const utterance = new SpeechSynthesisUtterance(cleanedText);
+      utterance.voice = selectedVoice;
+      utterance.lang = 'en-US'; // Fallback to en-US
+      utterance.rate = 1.0; // Standard rate
+      utterance.pitch = 1.0; // Standard pitch
+
+      utterance.onend = () => {
+        console.log('Finished speaking:', text); // Debug log
+        setIsSpeaking(false);
+        if (recognition) recognition.start();
+      };
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event); // Debug log
+        setIsSpeaking(false);
+        if (recognition) recognition.start();
+      };
+
+      window.speechSynthesis.speak(utterance);
     }
   };
 
@@ -311,6 +274,7 @@ function BeeOneAIChat() {
           onChange={(e) => {
             setNovaVoiceName(e.target.value);
             localStorage.setItem('novaVoice', e.target.value);
+            console.log('Voice changed to:', e.target.value); // Debug log
           }}
           style={{ padding: '8px 12px', fontSize: '14px' }}
         >
@@ -323,11 +287,12 @@ function BeeOneAIChat() {
         </select>
         <button
           onClick={() => {
-            const v = availableVoices.find((v) => v.name === novaVoiceName);
+            const v = availableVoices.find((v) => v.name === novaVoiceName) || availableVoices[0];
             if (v) {
               const u = new SpeechSynthesisUtterance('Hi! I’m Nova. This is how I sound.');
               u.voice = v;
               window.speechSynthesis.speak(u);
+              console.log('Preview voice:', v.name); // Debug log
             }
           }}
           style={{
@@ -364,7 +329,6 @@ function BeeOneAIChat() {
             />
           ))}
         </div>
-
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
             {messages.map((msg, index) => (
@@ -388,7 +352,6 @@ function BeeOneAIChat() {
             }}
           />
         </div>
-
         <div
           style={{
             width: '300px',
@@ -415,7 +378,6 @@ function BeeOneAIChat() {
           />
         </div>
       </div>
-
       {selectedImage && (
         <div
           onClick={() => setSelectedImage(null)}
