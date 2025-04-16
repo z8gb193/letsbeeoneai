@@ -11,8 +11,27 @@ const novaImages = [
 
 function ChatMessage({ message }) {
   return (
-    <div className={`my-2 ${message.isUser ? 'text-right text-blue-600' : 'text-left text-gray-800'}`}>
-      {message.content}
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: message.isUser ? 'flex-end' : 'flex-start',
+        marginBottom: '20px',
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: message.isUser ? '#e0f7fa' : '#f1f1f1',
+          color: message.isUser ? '#00796B' : '#333',
+          padding: '12px 16px',
+          borderRadius: '16px',
+          maxWidth: '70%',
+          fontSize: '17px',
+          lineHeight: '1.6',
+          whiteSpace: 'pre-wrap',
+        }}
+      >
+        {message.content}
+      </div>
     </div>
   );
 }
@@ -109,9 +128,18 @@ const speak = (textToSpeak) => {
 
 
   const newMessage = { type: 'text', content: text, isUser: sender !== "Nova" };
+
+if (sender === "Nova") {
+  setTimeout(() => {
+    const pop = new Audio('/sounds/pop.mp3'); // make sure this file exists
+    pop.play();
+
+    setMessages(prev => [...prev, newMessage]);
+    speak(text);
+  }, 2000); // 2-second delay
+} else {
   setMessages(prev => [...prev, newMessage]);
-  if (sender === "Nova") speak(text);
-};
+}
 
   const handleUserMessage = (text) => {
     if (!text.trim()) return;
