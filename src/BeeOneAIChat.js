@@ -14,7 +14,7 @@ function ChatMessage({ message }) {
     <div
       style={{
         display: 'flex',
-        justifyContent: message.isUser ? 'flex-end' : 'flex-start',
+        justifyContent: 'flex-start',
         marginBottom: '20px',
       }}
     >
