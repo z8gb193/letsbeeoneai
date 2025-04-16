@@ -161,7 +161,6 @@ if (isNova) {
 
     setMessages(prev => [...prev, newMessage]);
 
-    // ✅ Force speaking using novaVoiceName directly
     const voice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
     if (voice) {
       const cleanedText = text.replace(
@@ -180,9 +179,32 @@ if (isNova) {
 } else {
   setMessages(prev => [...prev, newMessage]);
 }
+}; // ✅ This closes addMessage
 
-};
+// ✅ Now the speakNow function begins — must be completely outside addMessage
+const speakNow = (text) => {
+  const voice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
+  if (!voice) return;
 
+  const cleanedText = text.replace(
+    /([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g,
+    ''
+  ) || text;
+
+  if (!cleanedText.trim()) return;
+
+  const utterance = new SpeechSynthesisUtterance(cleanedText);
+  utterance.voice = voice;
+  utterance.lang = voice.lang;
+  utterance.rate = 1.15;
+  utterance.pitch = 1.05;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}; // ✅ This closes speakNow
+
+// ✅ Now your handleUserMessage begins
+  
+  
   const handleUserMessage = (text) => {
     if (!text.trim()) return;
     addMessage("user", text);
@@ -237,8 +259,12 @@ if (isNova) {
       return;
     }
 
-   fetchReplyFromBackend("nova", text, memory, userName, "female").then(replyText => {
-  addMessage("Nova", replyText);
+fetchReplyFromBackend("nova", text, memory, userName, "female").then(replyText => {
+  addMessage("Nova", replyText); // this adds message to chat
+
+  // ❗ Nova must also speak here directly
+  speakNow(replyText);
+});
 
   // 🔊 Speak Nova's reply EVERY time, no matter what triggered it
   const voice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
