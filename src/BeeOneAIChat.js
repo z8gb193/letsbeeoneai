@@ -48,6 +48,12 @@ function BeeOneAIChat() {
   const videoRef = useRef(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
+recognition.lang = 'en-US';
+recognition.continuous = true;
+recognition.interimResults = false;
+  
   useEffect(() => {
     const synth = window.speechSynthesis;
     const loadVoices = () => {
@@ -58,6 +64,20 @@ function BeeOneAIChat() {
       synth.onvoiceschanged = loadVoices;
     }
     loadVoices();
+
+    recognition.start();
+
+recognition.onresult = (event) => {
+  const lastResult = event.results[event.results.length - 1];
+  const transcript = lastResult[0].transcript.trim();
+  if (transcript) {
+    handleUserMessage(transcript);
+  }
+};
+
+recognition.onend = () => {
+  recognition.start(); // Restart if it stops
+};
 
     const identity = JSON.parse(localStorage.getItem("novaIdentity"));
     if (identity && identity.codeWord) {
@@ -412,7 +432,12 @@ return (
         <img
           src={selectedImage}
           alt="Expanded Nova"
-          style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: '12px' }}
+          style={{
+  width: '500px', // Force it larger than the thumbnail
+  maxWidth: '90%',
+  maxHeight: '90%',
+  borderRadius: '12px'
+}}
         />
       </div>
     )}
