@@ -56,6 +56,47 @@ function BeeOneAIChat() {
   recognition.interimResults = false;
 
   useEffect(() => {
+    // ✅ Enable speech recognition once on load
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const lastResult = event.results[event.results.length - 1];
+      const transcript = lastResult[0].transcript.trim();
+      if (transcript) {
+        handleUserMessage(transcript);
+      }
+    };
+
+    recognition.onend = () => {
+      recognition.start();
+    };
+    // 🎤 Start speech recognition
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const lastResult = event.results[event.results.length - 1];
+      const transcript = lastResult[0].transcript.trim();
+      if (transcript) {
+        handleUserMessage(transcript);
+      }
+    };
+
+    recognition.onend = () => {
+      recognition.start();
+    };
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const lastResult = event.results[event.results.length - 1];
+      const transcript = lastResult[0].transcript.trim();
+      if (transcript) {
+        handleUserMessage(transcript);
+      }
+    };
+
+    recognition.onend = () => {
+      recognition.start();
+    };
     const synth = window.speechSynthesis;
     const loadVoices = () => {
       const voices = synth.getVoices();
@@ -224,3 +265,4 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
+
