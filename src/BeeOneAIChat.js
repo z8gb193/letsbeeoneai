@@ -161,20 +161,7 @@ if (isNova) {
 
     setMessages(prev => [...prev, newMessage]);
 
-    const voice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
-    if (voice) {
-      const cleanedText = text.replace(
-        /([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g,
-        ''
-      );
-      const utterance = new SpeechSynthesisUtterance(cleanedText);
-      utterance.voice = voice;
-      utterance.lang = voice.lang;
-      utterance.rate = 1.15;
-      utterance.pitch = 1.05;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utterance);
-    }
+
   }, 1000);
 } else {
   setMessages(prev => [...prev, newMessage]);
@@ -244,7 +231,7 @@ const speakNow = (text) => {
       };
       localStorage.setItem("novaIdentity", JSON.stringify(identity));
       setSetupStage("complete");
-      addMessage("Nova", `Great! Your codeword is saved in my memory, ${userName}. Next time, I’ll ask for it before we start. 💾`);
+      addMessage("Nova", Great! Your codeword is saved in my memory, ${userName}. Next time, I’ll ask for it before we start. 💾);
       return;
     }
 
@@ -252,7 +239,7 @@ const speakNow = (text) => {
       const saved = JSON.parse(localStorage.getItem("novaIdentity"));
       if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
         setSetupStage("complete");
-        addMessage("Nova", `Access granted 💛 Welcome back, ${saved.firstName}! Let's get going.`);
+        addMessage("Nova", Access granted 💛 Welcome back, ${saved.firstName}! Let's get going.);
       } else {
         addMessage("Nova", "Hmm... that’s not quite right. Until I get the correct codeword, things might be a bit... slow. 😶‍🌫️ Try again?");
       }
@@ -429,7 +416,7 @@ return (
           <img
             key={idx}
             src={img}
-            alt={`Nova ${idx}`}
+            alt={Nova ${idx}}
             style={{ width: '100%', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer' }}
             onClick={() => setSelectedImage(img)}
           />
