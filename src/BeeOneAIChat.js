@@ -45,6 +45,7 @@ function BeeOneAIChat() {
   const [setupStage, setSetupStage] = useState('start');
   const [memory, setMemory] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [recognitionListening, setRecognitionListening] = useState(false);
   const videoRef = useRef(null);
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -88,10 +89,12 @@ function BeeOneAIChat() {
         }
       };
 
-      recognition.onend = () => {
-        console.log('Recognition restarting'); // Debug log
-        recognition.start();
-      };
+recognition.onend = () => {
+  if (recognitionListening) {
+    console.log('Recognition restarting'); // Debug log
+    recognition.start();
+  }
+};
 
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error); // Debug log
@@ -304,6 +307,34 @@ function BeeOneAIChat() {
         </button>
       </div>
 
+{/* 🎙️ Speak to Nova Toggle Button */}
+<div style={{ textAlign: 'center', marginTop: '80px', zIndex: 1000 }}>
+  <button
+    onClick={() => {
+      if (recognitionListening) {
+        recognition.stop();
+        setRecognitionListening(false);
+      } else {
+        recognition.start();
+        setRecognitionListening(true);
+      }
+    }}
+    style={{
+      padding: '12px 24px',
+      fontSize: '18px',
+      backgroundColor: recognitionListening ? '#ffcccc' : '#ccffcc',
+      color: '#333',
+      border: '1px solid #aaa',
+      borderRadius: '10px',
+      cursor: 'pointer',
+      marginBottom: '10px'
+    }}
+  >
+    {recognitionListening ? '🛑 Stop Talking' : '🎙️ Speak to Nova'}
+  </button>
+</div>
+
+            
       <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
         <div
           style={{
