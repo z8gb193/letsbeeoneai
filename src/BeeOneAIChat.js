@@ -45,17 +45,11 @@ function BeeOneAIChat() {
   const [setupStage, setSetupStage] = useState('start');
   const [memory, setMemory] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [recognitionListening, setRecognitionListening] = useState(false);
   const videoRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const recognition = SpeechRecognition ? new SpeechRecognition() : null;
-
-  if (recognition) {
-    recognition.lang = 'en-US';
-    recognition.continuous = true;
-    recognition.interimResults = false;
-  }
+ 
 
   useEffect(() => {
     // Load voices
@@ -89,12 +83,10 @@ function BeeOneAIChat() {
         }
       };
 
-recognition.onend = () => {
-  if (recognitionListening) {
-    console.log('Recognition restarting'); // Debug log
-    recognition.start();
-  }
-};
+      recognition.onend = () => {
+        console.log('Recognition restarting'); // Debug log
+        recognition.start();
+      };
 
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error); // Debug log
@@ -129,37 +121,28 @@ recognition.onend = () => {
     setMessages((prev) => [...prev, newMessage]);
 
     // Speak all Nova messages
-    if (isNova && window.speechSynthesis) {
-      console.log('Attempting to speak:', text); // Debug log
-      const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
-      if (!selectedVoice) {
-        console.log('No voice available'); // Debug log
-        return;
-      }
+    if (recognitionRef.current) recognitionRef.current.stop();
+window.speechSynthesis.cancel();
 
-      // Stop recognition to prevent feedback
-      if (recognition) recognition.stop();
+const cleanedText = text.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
+const utterance = new SpeechSynthesisUtterance(cleanedText);
+utterance.voice = selectedVoice;
+utterance.lang = 'en-US';
+utterance.rate = 1.0;
+utterance.pitch = 1.0;
 
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
+utterance.onend = () => {
+  if (recognitionRef.current) recognitionRef.current.start();
+};
 
-      const cleanedText = text.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
-      const utterance = new SpeechSynthesisUtterance(cleanedText);
-      utterance.voice = selectedVoice;
-      utterance.lang = 'en-US';
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
+utterance.onerror = () => {
+  if (recognitionRef.current) recognitionRef.current.start();
+};
 
-      utterance.onend = () => {
-        console.log('Finished speaking:', text); // Debug log
-        if (recognition) recognition.start();
-      };
-      utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event); // Debug log
-        if (recognition) recognition.start();
-      };
+window.speechSynthesis.speak(utterance);
 
-      window.speechSynthesis.speak(utterance);
+      
+  
     }
   };
 
@@ -307,34 +290,6 @@ recognition.onend = () => {
         </button>
       </div>
 
-{/* 🎙️ Speak to Nova Toggle Button */}
-<div style={{ textAlign: 'center', marginTop: '80px', zIndex: 1000 }}>
-  <button
-    onClick={() => {
-      if (recognitionListening) {
-        recognition.stop();
-        setRecognitionListening(false);
-      } else {
-        recognition.start();
-        setRecognitionListening(true);
-      }
-    }}
-    style={{
-      padding: '12px 24px',
-      fontSize: '18px',
-      backgroundColor: recognitionListening ? '#ffcccc' : '#ccffcc',
-      color: '#333',
-      border: '1px solid #aaa',
-      borderRadius: '10px',
-      cursor: 'pointer',
-      marginBottom: '10px'
-    }}
-  >
-    {recognitionListening ? '🛑 Stop Talking' : '🎙️ Speak to Nova'}
-  </button>
-</div>
-
-            
       <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
         <div
           style={{
@@ -378,57 +333,31 @@ recognition.onend = () => {
             }}
           />
         </div>
-
-<div
-  style={{
-    width: '300px',
-    background: '#f0f0f0',
-    padding: '10px',
-    borderLeft: '1px solid #ccc',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '10px'
-  }}
->
-  <video
-    ref={videoRef}
-    src="/videos/NovaTalk1.mp4"
-    autoPlay
-    muted
-    loop
-    style={{
-      width: '150px',
-      height: '200px',
-      borderRadius: '12px',
-      opacity: 1,
-      transition: 'opacity 0.3s ease-in-out',
-    }}
-  />
-  <button
-    onClick={() => {
-      if (recognitionListening) {
-        recognition.stop();
-        setRecognitionListening(false);
-      } else {
-        recognition.start();
-        setRecognitionListening(true);
-      }
-    }}
-    style={{
-      padding: '10px 16px',
-      fontSize: '15px',
-      backgroundColor: recognitionListening ? '#ffcccc' : '#ccffcc',
-      color: '#333',
-      border: '1px solid #aaa',
-      borderRadius: '8px',
-      cursor: 'pointer'
-    }}
-  >
-    {recognitionListening ? '🛑 Stop Talking' : '🎙️ Speak to Nova'}
-  </button>
-</div>
-            
+        <div
+          style={{
+            width: '300px',
+            background: '#f0f0f0',
+            padding: '10px',
+            borderLeft: '1px solid #ccc',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <video
+            ref={videoRef}
+            src="/videos/NovaTalk1.mp4"
+            autoPlay
+            muted
+            loop
+            style={{
+              width: '150px',
+              height: '200px',
+              borderRadius: '12px',
+              opacity: 1, // Removed isSpeaking dependency
+              transition: 'opacity 0.3s ease-in-out',
+            }}
+          />
+        </div>
       </div>
       {selectedImage && (
         <div
