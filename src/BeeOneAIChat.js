@@ -147,7 +147,7 @@ const speak = (textToSpeak) => {
 
 
 
-  const newMessage = { type: 'text', content: text, isUser: sender !== "Nova" };
+  const newMessage = { type: 'text', content: text, isUser: sender.toLowerCase() !== "nova" };
 
 if (sender === "Nova") {
   setTimeout(() => {
