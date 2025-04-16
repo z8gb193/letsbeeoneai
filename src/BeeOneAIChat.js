@@ -237,9 +237,26 @@ if (isNova) {
       return;
     }
 
-    fetchReplyFromBackend("nova", text, memory, userName, "female").then(replyText => {
-      addMessage("nova", replyText); // ✅ lowercase to guarantee match
-    });
+   fetchReplyFromBackend("nova", text, memory, userName, "female").then(replyText => {
+  addMessage("Nova", replyText);
+
+  // 🔊 Speak Nova's reply EVERY time, no matter what triggered it
+  const voice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
+  if (voice && replyText.trim()) {
+    const cleanedText = replyText.replace(
+      /([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g,
+      ''
+    ) || replyText;
+
+    const utterance = new SpeechSynthesisUtterance(cleanedText);
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
+    utterance.rate = 1.15;
+    utterance.pitch = 1.05;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
+});
   };
 
   const fetchReplyFromBackend = async (character, message, memory, userName = "Friend", userGender = "unspecified") => {
