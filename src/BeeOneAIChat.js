@@ -378,31 +378,57 @@ recognition.onend = () => {
             }}
           />
         </div>
-        <div
-          style={{
-            width: '300px',
-            background: '#f0f0f0',
-            padding: '10px',
-            borderLeft: '1px solid #ccc',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
-          <video
-            ref={videoRef}
-            src="/videos/NovaTalk1.mp4"
-            autoPlay
-            muted
-            loop
-            style={{
-              width: '150px',
-              height: '200px',
-              borderRadius: '12px',
-              opacity: 1, // Removed isSpeaking dependency
-              transition: 'opacity 0.3s ease-in-out',
-            }}
-          />
-        </div>
+
+<div
+  style={{
+    width: '300px',
+    background: '#f0f0f0',
+    padding: '10px',
+    borderLeft: '1px solid #ccc',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '10px'
+  }}
+>
+  <video
+    ref={videoRef}
+    src="/videos/NovaTalk1.mp4"
+    autoPlay
+    muted
+    loop
+    style={{
+      width: '150px',
+      height: '200px',
+      borderRadius: '12px',
+      opacity: 1,
+      transition: 'opacity 0.3s ease-in-out',
+    }}
+  />
+  <button
+    onClick={() => {
+      if (recognitionListening) {
+        recognition.stop();
+        setRecognitionListening(false);
+      } else {
+        recognition.start();
+        setRecognitionListening(true);
+      }
+    }}
+    style={{
+      padding: '10px 16px',
+      fontSize: '15px',
+      backgroundColor: recognitionListening ? '#ffcccc' : '#ccffcc',
+      color: '#333',
+      border: '1px solid #aaa',
+      borderRadius: '8px',
+      cursor: 'pointer'
+    }}
+  >
+    {recognitionListening ? '🛑 Stop Talking' : '🎙️ Speak to Nova'}
+  </button>
+</div>
+            
       </div>
       {selectedImage && (
         <div
