@@ -55,82 +55,53 @@ function BeeOneAIChat() {
   recognition.continuous = true;
   recognition.interimResults = false;
 
-  useEffect(() => {
-    // ✅ Enable speech recognition once on load
-    recognition.start();
+useEffect(() => {
+  const synth = window.speechSynthesis;
+  const loadVoices = () => {
+    const voices = synth.getVoices();
+    setAvailableVoices(voices);
+  };
+  if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = loadVoices;
+  }
+  loadVoices();
 
-    recognition.onresult = (event) => {
-      const lastResult = event.results[event.results.length - 1];
-      const transcript = lastResult[0].transcript.trim();
-      if (transcript) {
-        handleUserMessage(transcript);
-      }
-    };
+  // 🎤 Speech recognition
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    console.warn("SpeechRecognition is not supported in this browser.");
+    return;
+  }
 
-    recognition.onend = () => {
-      recognition.start();
-    };
-    // 🎤 Start speech recognition
-    recognition.start();
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.continuous = true;
+  recognition.interimResults = false;
 
-    recognition.onresult = (event) => {
-      const lastResult = event.results[event.results.length - 1];
-      const transcript = lastResult[0].transcript.trim();
-      if (transcript) {
-        handleUserMessage(transcript);
-      }
-    };
-
-    recognition.onend = () => {
-      recognition.start();
-    };
-    recognition.start();
-
-    recognition.onresult = (event) => {
-      const lastResult = event.results[event.results.length - 1];
-      const transcript = lastResult[0].transcript.trim();
-      if (transcript) {
-        handleUserMessage(transcript);
-      }
-    };
-
-    recognition.onend = () => {
-      recognition.start();
-    };
-    const synth = window.speechSynthesis;
-    const loadVoices = () => {
-      const voices = synth.getVoices();
-      setAvailableVoices(voices);
-    };
-    if (synth.onvoiceschanged !== undefined) {
-      synth.onvoiceschanged = loadVoices;
+  recognition.onresult = (event) => {
+    const lastResult = event.results[event.results.length - 1];
+    const transcript = lastResult[0].transcript.trim();
+    if (transcript) {
+      handleUserMessage(transcript);
     }
-    loadVoices();
+  };
 
-    recognition.start();
+  recognition.onend = () => {
+    recognition.start(); // Auto-restart
+  };
 
-    recognition.onresult = (event) => {
-      const lastResult = event.results[event.results.length - 1];
-      const transcript = lastResult[0].transcript.trim();
-      if (transcript) {
-        handleUserMessage(transcript);
-      }
-    };
+  recognition.start();
 
-    recognition.onend = () => {
-      recognition.start();
-    };
-
-    const identity = JSON.parse(localStorage.getItem("novaIdentity"));
-    if (identity && identity.codeWord) {
-      setUserName(identity.firstName);
-      setSetupStage("verify");
-      addMessage("Nova", "Hey! What’s the codeword you gave me last time?");
-    } else {
-      setSetupStage("askName");
-      addMessage("Nova", "Hi! I’m Nova 💛 What’s your name?");
-    }
-  }, []);
+  const identity = JSON.parse(localStorage.getItem("novaIdentity"));
+  if (identity && identity.codeWord) {
+    setUserName(identity.firstName);
+    setSetupStage("verify");
+    addMessage("Nova", "Hey! What’s the codeword you gave me last time?");
+  } else {
+    setSetupStage("askName");
+    addMessage("Nova", "Hi! I’m Nova 💛 What’s your name?");
+  }
+}, []);
 
   const addMessage = (sender, text) => {
     const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
