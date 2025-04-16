@@ -1,3 +1,35 @@
+import React, { useState, useEffect, useRef } from 'react';
+
+const novaImages = [
+  '/avatars/Nova.png',
+  '/avatars/Nova2.png',
+  '/avatars/Nova3.png',
+  '/avatars/Nova4.png',
+  '/avatars/Nova5.png',
+  '/avatars/Nova6.png'
+];
+
+function ChatMessage({ message }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '20px' }}>
+      <div
+        style={{
+          backgroundColor: message.isUser ? '#e0f7fa' : '#f1f1f1',
+          color: message.isUser ? '#00796B' : '#333',
+          padding: '12px 16px',
+          borderRadius: '16px',
+          maxWidth: '70%',
+          fontSize: '17px',
+          lineHeight: '1.6',
+          whiteSpace: 'pre-wrap',
+        }}
+      >
+        {message.content}
+      </div>
+    </div>
+  );
+}
+
 function BeeOneAIChat() {
   const [availableVoices, setAvailableVoices] = useState([]);
   const [novaVoiceName, setNovaVoiceName] = useState(localStorage.getItem('novaVoice') || '');
@@ -57,6 +89,30 @@ function BeeOneAIChat() {
     }
   };
 
+  const fetchReplyFromBackend = async (character, message, memory, userName = 'Friend', userGender = 'unspecified') => {
+    try {
+      const response = await fetch('https://beeoneai-backend.onrender.com/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          character,
+          message,
+          memory: memory || [],
+          name: userName,
+          userId: 'default',
+          gender: userGender
+        })
+      });
+
+      const data = await response.json();
+      if (!data.reply) throw new Error('No reply returned from backend.');
+      return data.reply;
+    } catch (error) {
+      console.error('Backend error:', error);
+      return 'Nova is offline right now. Try again in a few minutes. 💛';
+    }
+  };
+
   const handleUserMessage = (text) => {
     if (!text.trim()) return;
     addMessage('user', text);
@@ -100,46 +156,20 @@ function BeeOneAIChat() {
       return;
     }
 
-    // ✅ THIS is the block to add:
-if (setupStage === 'complete') {
-  fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
-    console.log('Backend reply:', replyText);
+    // ✅ Normal convo begins once setupStage is complete
+    if (setupStage === 'complete') {
+      fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
+        console.log('Backend reply:', replyText);
 
-    if (!replyText || typeof replyText !== 'string') {
-      addMessage('Nova', 'Oops... Something went wrong. Try again? 💛');
-      return;
+        if (!replyText || typeof replyText !== 'string') {
+          addMessage('Nova', 'Oops... Something went wrong. Try again? 💛');
+          return;
+        }
+
+        addMessage('Nova', replyText);
+      });
     }
-
-    addMessage('Nova', replyText);
-  });
-}
-
-const fetchReplyFromBackend = async (character, message, memory, userName = 'Friend', userGender = 'unspecified') => {
-  try {
-    const response = await fetch('https://beeoneai-backend.onrender.com/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        character,
-        message,
-        memory: memory || [],
-        name: userName,
-        userId: 'default',
-        gender: userGender
-      })
-    });
-
-    const data = await response.json();
-
-    // ✅ Prevent blank screen if reply is missing
-    if (!data.reply) throw new Error('No reply returned from backend.');
-
-    return data.reply;
-  } catch (error) {
-    console.error('Backend error:', error);
-    return 'Nova is offline right now. Try again in a few minutes. 💛';
-  }
-};
+  };
 
   useEffect(() => {
     const synth = window.speechSynthesis;
@@ -194,9 +224,9 @@ const fetchReplyFromBackend = async (character, message, memory, userName = 'Fri
   };
 
   return (
-    // ... [same return layout you had]
     <></>
   );
 }
 
 export default BeeOneAIChat;
+
