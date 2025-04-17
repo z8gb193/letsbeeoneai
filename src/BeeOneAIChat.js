@@ -75,69 +75,77 @@ const saveToMemory = (newEntry) => {
     recognition.interimResults = false;
   }
 
-  useEffect(() => {
-    // Load voices
-    const storedMemory = JSON.parse(localStorage.getItem('novaMemory')) || [];
-setMemory(storedMemory);
-    const synth = window.speechSynthesis;
-    const loadVoices = () => {
-      const voices = synth.getVoices();
-      setAvailableVoices(voices);
-      console.log('Loaded voices:', voices.map(v => v.name)); // Debug log
-      // Set first voice as default if none selected
-      if (voices.length && !novaVoiceName) {
-        const firstVoice = voices[0].name;
-        setNovaVoiceName(firstVoice);
-        localStorage.setItem('novaVoice', firstVoice);
-        console.log('Set default voice:', firstVoice); // Debug log
+ useEffect(() => {
+  // ✅ NEW: Get ?user= from URL if present
+  const params = new URLSearchParams(window.location.search);
+  const userFromURL = params.get('user');
+  if (userFromURL) {
+    localStorage.setItem('beeoneUser', userFromURL);
+    console.log('Identified user from URL:', userFromURL); // Debug log
+  }
+
+  // Load voices
+  const storedMemory = JSON.parse(localStorage.getItem('novaMemory')) || [];
+  setMemory(storedMemory);
+  const synth = window.speechSynthesis;
+  const loadVoices = () => {
+    const voices = synth.getVoices();
+    setAvailableVoices(voices);
+    console.log('Loaded voices:', voices.map(v => v.name)); // Debug log
+    // Set first voice as default if none selected
+    if (voices.length && !novaVoiceName) {
+      const firstVoice = voices[0].name;
+      setNovaVoiceName(firstVoice);
+      localStorage.setItem('novaVoice', firstVoice);
+      console.log('Set default voice:', firstVoice); // Debug log
+    }
+  };
+  if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = loadVoices;
+  }
+  loadVoices();
+
+  if (recognition) {
+    recognition.onresult = (event) => {
+      const lastResult = event.results[event.results.length - 1];
+      if (lastResult.isFinal) {
+        const transcript = lastResult[0].transcript.trim();
+        console.log('Speech transcript:', transcript); // Debug log
+        if (transcript) {
+          handleUserMessage(transcript);
+        }
       }
     };
-    if (synth.onvoiceschanged !== undefined) {
-      synth.onvoiceschanged = loadVoices;
-    }
-    loadVoices();
 
-    if (recognition) {
-      recognition.onresult = (event) => {
-        const lastResult = event.results[event.results.length - 1];
-        if (lastResult.isFinal) {
-          const transcript = lastResult[0].transcript.trim();
-          console.log('Speech transcript:', transcript); // Debug log
-          if (transcript) {
-            handleUserMessage(transcript);
-          }
-        }
-      };
-
-      recognition.onend = () => {
-        console.log('Recognition restarting'); // Debug log
-        recognition.start();
-      };
-
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error); // Debug log
-      };
-
+    recognition.onend = () => {
+      console.log('Recognition restarting'); // Debug log
       recognition.start();
-    }
-
-    // Initial setup
-    const identity = JSON.parse(localStorage.getItem('novaIdentity'));
-    if (identity && identity.codeWord) {
-      setUserName(identity.firstName);
-      setSetupStage('verify');
-      addMessage('Nova', 'Hey! What’s the codeword you gave me last time?');
-    } else {
-      setSetupStage('askName');
-      addMessage('Nova', 'Hi! I’m Nova 💛 What’s your name?');
-    }
-
-    // Cleanup
-    return () => {
-      if (recognition) recognition.stop();
-      synth.cancel();
     };
-  }, []);
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error); // Debug log
+    };
+
+    recognition.start();
+  }
+
+  // Initial setup
+  const identity = JSON.parse(localStorage.getItem('novaIdentity'));
+  if (identity && identity.codeWord) {
+    setUserName(identity.firstName);
+    setSetupStage('verify');
+    addMessage('Nova', 'Hey! What’s the codeword you gave me last time?');
+  } else {
+    setSetupStage('askName');
+    addMessage('Nova', 'Hi! I’m Nova 💛 What’s your name?');
+  }
+
+  // Cleanup
+  return () => {
+    if (recognition) recognition.stop();
+    synth.cancel();
+  };
+}, []);
 
   const addMessage = (sender, text) => {
     console.log('Adding message:', { sender, text }); // Debug log
