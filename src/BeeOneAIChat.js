@@ -131,39 +131,41 @@ const addMessage = (sender, text) => {
   const newMessage = { type: 'text', content: text, isUser: !isNova };
   setMessages((prev) => [...prev, newMessage]);
 
-  if (isNova && window.speechSynthesis) {
-    console.log('🔊 Attempting to speak:', text);
-    const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
-    if (!selectedVoice) {
-      console.warn('❌ No voice selected');
-      return;
-    }
+ if (isNova && window.speechSynthesis) {
+  console.log('🔊 Attempting to speak:', text);
 
-    if (recognition) recognition.stop();
-    window.speechSynthesis.cancel();
-
-    const cleanedText = text.replace(
-      /[\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF]/g,
-      ''
-    );
-
-    const utterance = new SpeechSynthesisUtterance(cleanedText);
-    utterance.voice = selectedVoice;
-    utterance.lang = 'en-US';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-
-    utterance.onend = () => {
-      if (recognition) {
-        console.log('🎤 Restarting mic after Nova finishes speaking');
-        recognition.start();
-      }
-    };
-
-    console.log('🗣️ Speaking with voice:', selectedVoice.name);
-    window.speechSynthesis.speak(utterance);
+  const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
+  if (!selectedVoice) {
+    console.warn('❌ No voice selected');
+    return;
   }
-};
+
+  if (recognition) {
+    console.log('⛔ Stopping mic before Nova speaks');
+    recognition.stop();
+  }
+
+  window.speechSynthesis.cancel();
+
+  const cleanedText = text.replace(/[\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF]/g, '');
+  const utterance = new SpeechSynthesisUtterance(cleanedText);
+  utterance.voice = selectedVoice;
+  utterance.lang = 'en-US';
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+
+  utterance.onend = () => {
+    if (recognition) {
+      console.log('🎤 Restarting mic after Nova finishes speaking');
+      recognition.start();
+    }
+  };
+
+  setTimeout(() => {
+    console.log('🗣️ Speaking with voice:', utterance.voice.name);
+    window.speechSynthesis.speak(utterance);
+  }, 100); // 🔧 Delay fixes voice trigger after mic
+}
 
 const handleUserMessage = (text) => {
   if (!text.trim()) return;
