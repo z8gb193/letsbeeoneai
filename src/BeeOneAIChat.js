@@ -75,7 +75,7 @@ const saveToMemory = (newEntry) => {
     recognition.interimResults = false;
   }
 
- useEffect(() => {
+useEffect(() => {
   // ✅ NEW: Get ?user= from URL if present
   const params = new URLSearchParams(window.location.search);
   const userFromURL = params.get('user');
@@ -84,20 +84,21 @@ const saveToMemory = (newEntry) => {
     console.log('Identified user from URL:', userFromURL); // Debug log
   }
 
-  // Load voices
+  // Load memory
   const storedMemory = JSON.parse(localStorage.getItem('novaMemory')) || [];
   setMemory(storedMemory);
+
+  // Set up voices
   const synth = window.speechSynthesis;
   const loadVoices = () => {
     const voices = synth.getVoices();
     setAvailableVoices(voices);
-    console.log('Loaded voices:', voices.map(v => v.name)); // Debug log
-    // Set first voice as default if none selected
+    console.log('Loaded voices:', voices.map(v => v.name));
     if (voices.length && !novaVoiceName) {
       const firstVoice = voices[0].name;
       setNovaVoiceName(firstVoice);
       localStorage.setItem('novaVoice', firstVoice);
-      console.log('Set default voice:', firstVoice); // Debug log
+      console.log('Set default voice:', firstVoice);
     }
   };
   if (synth.onvoiceschanged !== undefined) {
@@ -110,7 +111,7 @@ const saveToMemory = (newEntry) => {
       const lastResult = event.results[event.results.length - 1];
       if (lastResult.isFinal) {
         const transcript = lastResult[0].transcript.trim();
-        console.log('Speech transcript:', transcript); // Debug log
+        console.log('Speech transcript:', transcript);
         if (transcript) {
           handleUserMessage(transcript);
         }
@@ -118,12 +119,12 @@ const saveToMemory = (newEntry) => {
     };
 
     recognition.onend = () => {
-      console.log('Recognition restarting'); // Debug log
+      console.log('Recognition restarting');
       recognition.start();
     };
 
     recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error); // Debug log
+      console.error('Speech recognition error:', event.error);
     };
 
     recognition.start();
@@ -140,98 +141,11 @@ const saveToMemory = (newEntry) => {
     addMessage('Nova', 'Hi! I’m Nova 💛 What’s your name?');
   }
 
-  // Cleanup
   return () => {
     if (recognition) recognition.stop();
     synth.cancel();
   };
 }, []);
-
-  const addMessage = (sender, text) => {
-    console.log('Adding message:', { sender, text }); // Debug log
-    const isNova = sender.toLowerCase() === 'nova';
-    const newMessage = { type: 'text', content: text, isUser: !isNova };
-
-    setMessages((prev) => [...prev, newMessage]);
- }; // <--- 🧠 You missed this bracket!
-    // Speak all Nova messages
-    // if (isNova && window.speechSynthesis) {
-//   ...
-//   window.speechSynthesis.speak(utterance);
-// }
-   
-
-  const handleUserMessage = (text) => {
-    console.log('Handling user message:', text); // Debug log
-    if (!text.trim()) return;
-    addMessage('user', text);
-
-if (setupStage === 'askName') {
-  const name = text.trim();
-  setUserName(name);
-  saveToMemory(`User's name is ${name}`);
-  setSetupStage('askAge');
-  addMessage('Nova', 'Nice to meet you! How old are you?');
-  return;
-}
-
-if (setupStage === 'askAge') {
-  saveToMemory(`User is ${text.trim()} years old`);
-  setSetupStage('askMother');
-  addMessage('Nova', 'What’s your mother’s first name?');
-  return;
-}
-
-if (setupStage === 'askMother') {
-  saveToMemory(`User's mother is named ${text.trim()}`);
-  setSetupStage('askPet');
-  addMessage('Nova', 'What’s your pet’s name? (or say "none")');
-  return;
-}
-
-if (setupStage === 'askPet') {
-  saveToMemory(`User's pet is named ${text.trim()}`);
-  setSetupStage('askCodeword');
-  addMessage('Nova', 'Now choose a codeword you’ll remember. This will be your key next time! 🧠 Write it down now.');
-  return;
-}
-
-if (setupStage === 'askCodeword') {
-  const code = text.trim();
-  saveToMemory(`User's codeword is ${code}`);
-  const identity = {
-    firstName: userName,
-    age: '?',
-    motherName: '?',
-    petName: '?',
-    codeWord: code,
-  };
-  localStorage.setItem('novaIdentity', JSON.stringify(identity));
-  setSetupStage('complete');
-  addMessage('Nova', `Great! Your codeword is saved in my memory, ${userName}. Next time, I’ll ask for it before we start. 💾`);
-  return;
-}
-
-    if (setupStage === 'verify') {
-      const saved = JSON.parse(localStorage.getItem('novaIdentity'));
-      if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
-        setSetupStage('complete');
-        addMessage('Nova', `Access granted 💛 Welcome back, ${saved.firstName}! Let's get going.`);
-      } else {
-        addMessage('Nova', 'Hmm... that’s not quite right. Until I get the correct codeword, things might be a bit... slow. 😶‍🌫️ Try again?');
-      }
-      return;
-    }
-
- fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
-  addMessage('Nova', replyText);
-  // Optional: Save fact if user says something like "I love astronomy"
-  if (text.toLowerCase().includes('i love')) {
-    saveToMemory(`User loves: ${text.slice(text.toLowerCase().indexOf('i love') + 7)}`);
-  }
-});
-  };
-
   const fetchReplyFromBackend = async (character, message, memory, userName = 'Friend', userGender = 'unspecified') => {
     try {
       const response = await fetch('https://beeoneai-backend.onrender.com/chat', {
@@ -247,6 +161,17 @@ if (setupStage === 'askCodeword') {
     }
   };
 
+const addMessage = (sender, text) => {
+  console.log('Adding message:', { sender, text }); // Debug log
+  const isNova = sender.toLowerCase() === 'nova';
+  const newMessage = { type: 'text', content: text, isUser: !isNova };
+
+  setMessages((prev) => [...prev, newMessage]);
+
+  // 🗣️ Nova's speech is disabled intentionally — no voice playback
+};
+
+  
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleUserMessage(input);
@@ -256,64 +181,7 @@ if (setupStage === 'askCodeword') {
 
   return (
     <>
-      <div
-        style={{
-          position: 'fixed',
-          top: 20,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 1000,
-          background: '#ffffff',
-          padding: '12px 20px',
-          border: '1px solid #ccc',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          fontFamily: 'Arial, sans-serif',
-        }}
-      >
-        <label style={{ fontWeight: 'bold' }}>Voice:</label>
-        <select
-          value={novaVoiceName}
-          onChange={(e) => {
-            setNovaVoiceName(e.target.value);
-            localStorage.setItem('novaVoice', e.target.value);
-            console.log('Voice changed to:', e.target.value); // Debug log
-          }}
-          style={{ padding: '8px 12px', fontSize: '14px' }}
-        >
-          <option value="">-- Select Nova's Voice --</option>
-          {availableVoices.map((v, i) => (
-            <option key={i} value={v.name}>
-              {v.name} ({v.lang})
-            </option>
-          ))}
-        </select>
-        <button
-          onClick={() => {
-            const v = availableVoices.find((v) => v.name === novaVoiceName) || availableVoices[0];
-            if (v) {
-              const u = new SpeechSynthesisUtterance('Hi! I’m Nova. This is how I sound.');
-              u.voice = v;
-              window.speechSynthesis.speak(u);
-              console.log('Preview voice:', v.name); // Debug log
-            }
-          }}
-          style={{
-            padding: '8px 12px',
-            fontSize: '14px',
-            backgroundColor: '#007bff',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-          }}
-        >
-          Preview
-        </button>
-      </div>
+      
 
       <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
         <div
