@@ -161,11 +161,11 @@ const addMessage = (sender, text) => {
     }
   };
 
-  setTimeout(() => {
-    console.log('🗣️ Speaking with voice:', utterance.voice.name);
-    window.speechSynthesis.speak(utterance);
-  }, 100); // 🔧 Delay fixes voice trigger after mic
-}; 
+setTimeout(() => {
+  console.log('🗣️ Speaking with voice:', utterance.voice.name);
+  window.speechSynthesis.speak(utterance);
+}, 100); // 🔧 Delay fixes voice trigger after mic
+} // ✅ CLOSES addMessage function properly
 
 const handleUserMessage = (text) => {
   if (!text.trim()) return;
