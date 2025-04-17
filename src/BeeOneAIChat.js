@@ -438,9 +438,9 @@ const handleUserMessage = (text) => {
           }}
         />
       </div>
+ )} {/* ✅ closes the conditional image block */}
   </>
-); // ✅ closes return JSX block
-
-}; // ✅ closes function BeeOneAIChat
+); // ✅ closes return statement of BeeOneAIChat
+} // ✅ closes function BeeOneAIChat
 
 export default BeeOneAIChat;
