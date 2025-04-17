@@ -79,6 +79,12 @@ function BeeOneAIChat() {
     addMessage('Nova', 'Hi! I’m Nova 💛 What’s your name?');
   }
 
+const savedMemory = JSON.parse(localStorage.getItem('novaMemory'));
+if (savedMemory && Array.isArray(savedMemory)) {
+  setMemory(savedMemory);
+}
+
+   
   // 🧠 Voice input triggers chat
   if (recognition) {
     recognition.onresult = (event) => {
@@ -179,6 +185,21 @@ function BeeOneAIChat() {
 
     fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
       addMessage('Nova', replyText);
+
+// Extract memory keywords (very basic version)
+const newMemory = [...memory];
+const keywords = replyText.match(/\\b(like|love|want|enjoy|hate|afraid of)\\b.*?\\b(\\w{3,})/gi);
+if (keywords) {
+  keywords.forEach(k => {
+    const cleaned = k.toLowerCase().trim();
+    if (!newMemory.includes(cleaned)) {
+      newMemory.push(cleaned);
+    }
+  });
+}
+setMemory(newMemory);
+localStorage.setItem('novaMemory', JSON.stringify(newMemory));
+      
     });
   };
 
