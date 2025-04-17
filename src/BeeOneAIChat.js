@@ -69,15 +69,23 @@ function BeeOneAIChat() {
 
   loadVoices();
 
-  const identity = JSON.parse(localStorage.getItem('novaIdentity'));
-  if (identity && identity.codeWord) {
+ const identity = JSON.parse(localStorage.getItem('novaIdentity'));
+const bypass = true; // ← change to false later if you want codeword check
+
+if (identity && identity.codeWord && !bypass) {
+  setUserName(identity.firstName);
+  setSetupStage('verify');
+  addMessage('Nova', 'Hey! What’s the codeword you gave me last time?');
+} else {
+  if (identity && identity.firstName) {
     setUserName(identity.firstName);
-    setSetupStage('complete'); // 💥 force skip to chat mode
+    setSetupStage('complete');
     addMessage('Nova', `Welcome back, ${identity.firstName}! 💛 I’m ready to talk.`);
   } else {
     setSetupStage('askName');
     addMessage('Nova', 'Hi! I’m Nova 💛 What’s your name?');
   }
+}
 
 const savedMemory = JSON.parse(localStorage.getItem('novaMemory'));
 if (savedMemory && Array.isArray(savedMemory)) {
@@ -142,7 +150,10 @@ if (savedMemory && Array.isArray(savedMemory)) {
 
   const handleUserMessage = (text) => {
     if (!text.trim()) return;
-
+if (setupStage !== 'complete') {
+  console.log('⚠️ Forcing complete mode');
+  setSetupStage('complete');
+}
 
     if (setupStage === 'askName') {
       setUserName(text.trim());
