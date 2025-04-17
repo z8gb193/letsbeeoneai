@@ -171,114 +171,88 @@ setTimeout(() => {
 const handleUserMessage = (text) => {
   if (!text.trim()) return;
 
-  if (setupStage === 'verify') {
-    const saved = JSON.parse(localStorage.getItem('novaIdentity'));
-    const answer = text.trim().toLowerCase();
+  const saved = JSON.parse(localStorage.getItem('novaIdentity'));
+  const answer = text.trim().toLowerCase();
 
+  // 🔐 Verify user identity first
+  if (setupStage === 'verify') {
     if (saved && saved.codeWord.toLowerCase() === answer) {
       setSetupStage('complete');
-
+      setSoftVerifyStage(0);
       setTimeout(() => {
         handleUserMessage("Hey Nova, I'm back.");
       }, 100);
-
       return;
     }
 
-    // Soft verification stages (1–3)
     if (softVerifyStage > 0) {
       let correct = false;
-
       if (softVerifyStage === 1 && saved?.motherName?.toLowerCase() === answer) correct = true;
       if (softVerifyStage === 2 && saved?.petName?.toLowerCase() === answer) correct = true;
       if (softVerifyStage === 3 && (answer.includes('love') || answer.includes('hobby') || answer.includes('sport'))) correct = true;
 
+      if (correct) {
+        setSetupStage('complete');
+        setSoftVerifyStage(0);
+        addMessage('Nova', `✅ That sounds right. I trust you. Your codeword was "**${saved.codeWord}**". Welcome back 💛`);
+      } else if (softVerifyStage < 3) {
+        const nextStage = softVerifyStage + 1;
+        setSoftVerifyStage(nextStage);
+        const prompts = [
+          "What’s your mother’s name?",
+          "What’s your pet’s name?",
+          "Tell me something you said you love.",
+        ];
+        addMessage('Nova', prompts[nextStage - 1]);
+      } else {
+        setSoftVerifyStage(0);
+        addMessage('Nova', "I'm still not sure... but that’s okay. Would you like to reset me and start fresh? Or try again later 💭");
+      }
 
-      if (setupStage === 'verify') {
-  const saved = JSON.parse(localStorage.getItem('novaIdentity'));
-  const answer = text.trim().toLowerCase();
-
-  if (saved && saved.codeWord.toLowerCase() === answer) {
-    setSetupStage('complete');
-
-    setTimeout(() => {
-      handleUserMessage("Hey Nova, I'm back.");
-    }, 100);
-
-    return;
-  }
-
-  if (softVerifyStage > 0) {
-    let correct = false;
-
-    if (softVerifyStage === 1 && saved?.motherName?.toLowerCase() === answer) correct = true;
-    if (softVerifyStage === 2 && saved?.petName?.toLowerCase() === answer) correct = true;
-    if (softVerifyStage === 3 && (answer.includes('love') || answer.includes('hobby') || answer.includes('sport'))) correct = true;
-
-    if (correct) {
-      setSetupStage('complete');
-      setSoftVerifyStage(0);
-      addMessage('Nova', `✅ That sounds right. I trust you. Your codeword was "**${saved.codeWord}**". Welcome back 💛`);
-    } else if (softVerifyStage < 3) {
-      const nextStage = softVerifyStage + 1;
-      setSoftVerifyStage(nextStage);
-
-      const prompts = [
-        "What’s your mother’s name?",
-        "What’s your pet’s name?",
-        "Tell me something you said you love.",
-      ];
-
-      addMessage('Nova', prompts[nextStage - 1]); // ask next question
-    } else {
-      setSoftVerifyStage(0);
-      addMessage('Nova', "I'm still not sure... but that’s okay. Would you like to reset me and start fresh? Or try again later 💭");
+      return;
     }
 
+    // 🚨 First failed attempt: begin soft verification
+    setSoftVerifyStage(1);
+    addMessage('Nova', "That doesn't seem right, but I can try a few questions to help 💡");
+    addMessage('Nova', "What’s your mother’s name?");
     return;
   }
 
-  setSoftVerifyStage(1);
-  addMessage('Nova', "That doesn't seem right, but I can try a few questions to help 💡");
-  addMessage('Nova', "What’s your mother’s name?");
-  return;
-}
+  // ✅ Normal AI conversation once verified
+  fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
+    if (!replyText || typeof replyText !== 'string') {
+      console.warn('🛑 Nova backend gave no reply.');
+      return;
+    }
 
-// ✅ Normal message flow after verification
-fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
-  if (!replyText || typeof replyText !== 'string') {
-    console.warn('🛑 Nova backend gave no reply.');
-    return;
-  }
+    console.log('💬 Nova replied:', replyText);
+    addMessage('Nova', replyText);
 
-  console.log('💬 Nova replied:', replyText);
-  addMessage('Nova', replyText);
-});
+    // 🧠 Memory management
+    const keywords = replyText.match(/\b(like|love|want|enjoy|hate|afraid of|interested in|sport:|football|tennis|basketball|cricket|hobby|mother|father|pet|name|friend|lost|first kiss|accident|divorce|trauma)\b.*?\b(\w{3,})/gi);
+    const incomingMemory = keywords ? keywords.map(k => k.toLowerCase().trim()) : [];
+    const allMemory = Array.from(new Set([...memory, ...incomingMemory]));
 
-  // 🧠 Memory upgrade
-  const keywords = replyText.match(/\b(like|love|want|enjoy|hate|afraid of|interested in|sport:|football|tennis|basketball|cricket|hobby|mother|father|pet|name|friend|lost|first kiss|accident|divorce|trauma)\b.*?\b(\w{3,})/gi);
-  const incomingMemory = keywords ? keywords.map(k => k.toLowerCase().trim()) : [];
-  const allMemory = Array.from(new Set([...memory, ...incomingMemory]));
+    const MAX_MEMORY = 100;
+    const essentials = [
+      'name', 'mother', 'father', 'friend', 'pet',
+      'lost', 'love', 'first kiss', 'accident', 'divorce', 'trauma',
+      'interested in', 'hobby', 'football', 'tennis', 'basketball', 'sport'
+    ];
 
-  const MAX_MEMORY = 100;
-  const essentials = [
-    'name', 'mother', 'father', 'friend', 'pet',
-    'lost', 'love', 'first kiss', 'accident', 'divorce', 'trauma',
-    'interested in', 'hobby', 'football', 'tennis', 'basketball', 'sport'
-  ];
+    const essentialOnly = allMemory.filter(item =>
+      essentials.some(keyword => item.includes(keyword))
+    );
+    const nonEssential = allMemory.filter(item =>
+      !essentials.some(keyword => item.includes(keyword))
+    );
 
-  const essentialOnly = allMemory.filter(item =>
-    essentials.some(keyword => item.includes(keyword))
-  );
-  const nonEssential = allMemory.filter(item =>
-    !essentials.some(keyword => item.includes(keyword))
-  );
-
-  const trimmedMemory = [...essentialOnly, ...nonEssential.slice(0, MAX_MEMORY - essentialOnly.length)];
-
-  setMemory(trimmedMemory);
-  localStorage.setItem('novaMemory', JSON.stringify(trimmedMemory));
-});
+    const trimmedMemory = [...essentialOnly, ...nonEssential.slice(0, MAX_MEMORY - essentialOnly.length)];
+    setMemory(trimmedMemory);
+    localStorage.setItem('novaMemory', JSON.stringify(trimmedMemory));
+  });
+};
 }; // ✅ CLOSES handleUserMessage
   const fetchReplyFromBackend = async (character, message, memory, userName = 'Friend', userGender = 'unspecified') => {
     try {
