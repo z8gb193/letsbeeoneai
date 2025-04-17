@@ -165,7 +165,7 @@ setTimeout(() => {
   console.log('🗣️ Speaking with voice:', utterance.voice.name);
   window.speechSynthesis.speak(utterance);
 }, 100); // 🔧 Delay fixes voice trigger after mic
-} // ✅ CLOSES addMessage function properly
+}; // ✅ CLOSES addMessage function properly
 
 const handleUserMessage = (text) => {
   if (!text.trim()) return;
@@ -428,11 +428,9 @@ const handleUserMessage = (text) => {
         />
       </div>
     )}
-  </>
-);
+ </>
+); // ✅ closes the return
 
-
-  
-}
+}; // ✅ closes the BeeOneAIChat function
 
 export default BeeOneAIChat;
