@@ -101,8 +101,12 @@ useEffect(() => {
     };
 
     recognition.onend = () => {
-      console.log('🎤 Mic restarted');
-      recognition.start();
+      if (!window.speechSynthesis.speaking) {
+        console.log('🎤 Mic restarted');
+        recognition.start();
+      } else {
+        console.log('⏸️ Delaying mic restart — Nova is still speaking');
+      }
     };
 
     recognition.onerror = (event) => {
@@ -118,6 +122,7 @@ useEffect(() => {
     synth.cancel();
   };
 }, []);
+
 
   const addMessage = (sender, text) => {
     const isNova = sender.toLowerCase() === 'nova';
@@ -138,12 +143,12 @@ useEffect(() => {
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
 
-      utterance.onend = () => {
-        if (recognition) recognition.start();
-      };
-      utterance.onerror = () => {
-        if (recognition) recognition.start();
-      };
+    utterance.onend = () => {
+  if (recognition) {
+    console.log('🎤 Restarting mic after Nova finishes speaking');
+    recognition.start();
+  }
+};
 
       window.speechSynthesis.speak(utterance);
     }
