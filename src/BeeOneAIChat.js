@@ -151,8 +151,8 @@ const addMessage = (sender, text) => {
   const utterance = new SpeechSynthesisUtterance(cleanedText);
   utterance.voice = selectedVoice;
   utterance.lang = 'en-US';
-  utterance.rate = 1.0;
-  utterance.pitch = 1.0;
+  utterance.rate = 1.2;
+  utterance.pitch = 1.1;
 
   utterance.onend = () => {
     if (recognition) {
@@ -175,16 +175,22 @@ const handleUserMessage = (text) => {
   console.log('🔍 Current setupStage:', setupStage);
 
   // ✅ Auto-progress setup if using voice
-  if (setupStage !== 'complete') {
-    console.warn('⚠️ Forcing setupStage to complete (for voice input)');
+ if (setupStage === 'verify') {
+  const saved = JSON.parse(localStorage.getItem('novaIdentity'));
+
+  if (saved && saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
     setSetupStage('complete');
 
     setTimeout(() => {
-      handleUserMessage(text); // Re-trigger the message as if freshly sent in complete mode
-    }, 10);
+      handleUserMessage("Hey Nova, I'm back.");
+    }, 100); // 🔧 Delay ensures mic and speech aren’t fighting
 
-    return; // ✅ Important: this ends the original call cleanly
+  } else {
+    addMessage('Nova', 'Hmm... that’s not quite right. Try saying the codeword again. 💛');
   }
+
+  return;
+}
 
   fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
     if (!replyText || typeof replyText !== 'string') {
