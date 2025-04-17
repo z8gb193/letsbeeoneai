@@ -276,7 +276,7 @@ const handleUserMessage = (text) => {
     setInput('');                      // ✅ Clear input field
   }
 };
-
+};
 
   return (
   <>
@@ -442,6 +442,6 @@ const handleUserMessage = (text) => {
  </>
 ); // ✅ closes the return
 
-}; // ✅ closes the BeeOneAIChat function
+
 
 export default BeeOneAIChat;
