@@ -375,20 +375,20 @@ if (setupStage === 'askCodeword') {
             zIndex: 1000,
           }}
         >
-          <img
-            src={selectedImage}
-            alt="Expanded Nova"
-            style={{
-              width: '500px',
-              maxWidth: '90%',
-              maxHeight: '90%',
-              borderRadius: '12px',
-            }}
-          />
-        </div>
-      )}
-    </>
-  );
+         <img
+      src={selectedImage}
+      alt="Expanded Nova"
+      style={{
+        width: '500px',
+        maxWidth: '90%',
+        maxHeight: '90%',
+        borderRadius: '12px',
+      }}
+    />
+  </div>
+)}
+</>
+);
 }
 
 export default BeeOneAIChat;
