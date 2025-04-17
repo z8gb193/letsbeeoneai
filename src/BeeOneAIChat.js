@@ -124,35 +124,46 @@ useEffect(() => {
 }, []);
 
 
-  const addMessage = (sender, text) => {
-   const isNova = sender.toLowerCase().includes('nova');
-    const newMessage = { type: 'text', content: text, isUser: !isNova };
-    setMessages((prev) => [...prev, newMessage]);
+const addMessage = (sender, text) => {
+  const isNova = sender.toLowerCase().includes('nova');
+  console.log('📥 Message from:', sender, '| isNova:', isNova, '| Text:', text);
 
-    if (isNova && window.speechSynthesis) {
-      const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
-      if (!selectedVoice) return;
+  const newMessage = { type: 'text', content: text, isUser: !isNova };
+  setMessages((prev) => [...prev, newMessage]);
 
-      if (recognition) recognition.stop();
-      window.speechSynthesis.cancel();
+  if (isNova && window.speechSynthesis) {
+    console.log('🔊 Attempting to speak:', text);
+    const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
+    if (!selectedVoice) {
+      console.warn('❌ No voice selected');
+      return;
+    }
 
-      const cleanedText = text.replace(/[\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF]/g, '');
-      const utterance = new SpeechSynthesisUtterance(cleanedText);
-      utterance.voice = selectedVoice;
-      utterance.lang = 'en-US';
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
+    if (recognition) recognition.stop();
+    window.speechSynthesis.cancel();
+
+    const cleanedText = text.replace(
+      /[\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF]/g,
+      ''
+    );
+
+    const utterance = new SpeechSynthesisUtterance(cleanedText);
+    utterance.voice = selectedVoice;
+    utterance.lang = 'en-US';
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
 
     utterance.onend = () => {
-  if (recognition) {
-    console.log('🎤 Restarting mic after Nova finishes speaking');
-    recognition.start();
+      if (recognition) {
+        console.log('🎤 Restarting mic after Nova finishes speaking');
+        recognition.start();
+      }
+    };
+
+    console.log('🗣️ Speaking with voice:', selectedVoice.name);
+    window.speechSynthesis.speak(utterance);
   }
 };
-
-      window.speechSynthesis.speak(utterance);
-    }
-  };
 
 const handleUserMessage = (text) => {
   if (!text.trim()) return;
@@ -246,11 +257,12 @@ const handleUserMessage = (text) => {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleUserMessage(input);
-      setInput('');
-    }
-  };
+  if (e.key === 'Enter') {
+    addMessage('user', input);         // ✅ Show typed message
+    handleUserMessage(input);          // ✅ Trigger Nova’s response
+    setInput('');                      // ✅ Clear input field
+  }
+};
 
 
   return (
