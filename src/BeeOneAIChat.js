@@ -49,7 +49,26 @@ function BeeOneAIChat() {
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+// ✅ Utility to save memory with duplicate checks and trimming
+const saveToMemory = (newEntry) => {
+  const currentMemory = JSON.parse(localStorage.getItem('novaMemory')) || [];
 
+  // Avoid duplicate or empty entries
+  if (!newEntry || currentMemory.includes(newEntry.trim())) return;
+
+  const updatedMemory = [...currentMemory, newEntry.trim()];
+
+  // Trim memory if too long (keep max 50 important entries)
+  if (updatedMemory.length > 50) {
+    updatedMemory.splice(0, updatedMemory.length - 50);
+  }
+
+  localStorage.setItem('novaMemory', JSON.stringify(updatedMemory));
+  setMemory(updatedMemory);
+};
+
+
+  
   if (recognition) {
     recognition.lang = 'en-US';
     recognition.continuous = true;
@@ -58,6 +77,8 @@ function BeeOneAIChat() {
 
   useEffect(() => {
     // Load voices
+    const storedMemory = JSON.parse(localStorage.getItem('novaMemory')) || [];
+setMemory(storedMemory);
     const synth = window.speechSynthesis;
     const loadVoices = () => {
       const voices = synth.getVoices();
@@ -165,44 +186,51 @@ function BeeOneAIChat() {
     if (!text.trim()) return;
     addMessage('user', text);
 
-    if (setupStage === 'askName') {
-      setUserName(text.trim());
-      setSetupStage('askAge');
-      addMessage('Nova', 'Nice to meet you! How old are you?');
-      return;
-    }
+if (setupStage === 'askName') {
+  const name = text.trim();
+  setUserName(name);
+  saveToMemory(`User's name is ${name}`);
+  setSetupStage('askAge');
+  addMessage('Nova', 'Nice to meet you! How old are you?');
+  return;
+}
 
-    if (setupStage === 'askAge') {
-      setSetupStage('askMother');
-      addMessage('Nova', 'What’s your mother’s first name?');
-      return;
-    }
+if (setupStage === 'askAge') {
+  saveToMemory(`User is ${text.trim()} years old`);
+  setSetupStage('askMother');
+  addMessage('Nova', 'What’s your mother’s first name?');
+  return;
+}
 
-    if (setupStage === 'askMother') {
-      setSetupStage('askPet');
-      addMessage('Nova', 'What’s your pet’s name? (or say "none")');
-      return;
-    }
+if (setupStage === 'askMother') {
+  saveToMemory(`User's mother is named ${text.trim()}`);
+  setSetupStage('askPet');
+  addMessage('Nova', 'What’s your pet’s name? (or say "none")');
+  return;
+}
 
-    if (setupStage === 'askPet') {
-      setSetupStage('askCodeword');
-      addMessage('Nova', 'Now choose a codeword you’ll remember. This will be your key next time! 🧠 Write it down now.');
-      return;
-    }
+if (setupStage === 'askPet') {
+  saveToMemory(`User's pet is named ${text.trim()}`);
+  setSetupStage('askCodeword');
+  addMessage('Nova', 'Now choose a codeword you’ll remember. This will be your key next time! 🧠 Write it down now.');
+  return;
+}
 
-    if (setupStage === 'askCodeword') {
-      const identity = {
-        firstName: userName,
-        age: '?',
-        motherName: '?',
-        petName: '?',
-        codeWord: text.trim(),
-      };
-      localStorage.setItem('novaIdentity', JSON.stringify(identity));
-      setSetupStage('complete');
-      addMessage('Nova', `Great! Your codeword is saved in my memory, ${userName}. Next time, I’ll ask for it before we start. 💾`);
-      return;
-    }
+if (setupStage === 'askCodeword') {
+  const code = text.trim();
+  saveToMemory(`User's codeword is ${code}`);
+  const identity = {
+    firstName: userName,
+    age: '?',
+    motherName: '?',
+    petName: '?',
+    codeWord: code,
+  };
+  localStorage.setItem('novaIdentity', JSON.stringify(identity));
+  setSetupStage('complete');
+  addMessage('Nova', `Great! Your codeword is saved in my memory, ${userName}. Next time, I’ll ask for it before we start. 💾`);
+  return;
+}
 
     if (setupStage === 'verify') {
       const saved = JSON.parse(localStorage.getItem('novaIdentity'));
@@ -215,10 +243,13 @@ function BeeOneAIChat() {
       return;
     }
 
-    fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
-      console.log('Backend reply:', replyText); // Debug log
-      addMessage('Nova', replyText);
-    });
+ fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
+  addMessage('Nova', replyText);
+  // Optional: Save fact if user says something like "I love astronomy"
+  if (text.toLowerCase().includes('i love')) {
+    saveToMemory(`User loves: ${text.slice(text.toLowerCase().indexOf('i love') + 7)}`);
+  }
+});
   };
 
   const fetchReplyFromBackend = async (character, message, memory, userName = 'Friend', userGender = 'unspecified') => {
