@@ -155,39 +155,10 @@ const saveToMemory = (newEntry) => {
     setMessages((prev) => [...prev, newMessage]);
 
     // Speak all Nova messages
-    if (isNova && window.speechSynthesis) {
-      console.log('Attempting to speak:', text); // Debug log
-      const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
-      if (!selectedVoice) {
-        console.log('No voice available'); // Debug log
-        return;
-      }
-
-      // Stop recognition to prevent feedback
-      if (recognition) recognition.stop();
-
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
-
-      const cleanedText = text.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
-      const utterance = new SpeechSynthesisUtterance(cleanedText);
-      utterance.voice = selectedVoice;
-      utterance.lang = 'en-US';
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-
-      utterance.onend = () => {
-        console.log('Finished speaking:', text); // Debug log
-        if (recognition) recognition.start();
-      };
-      utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event); // Debug log
-        if (recognition) recognition.start();
-      };
-
-      window.speechSynthesis.speak(utterance);
-    }
-  };
+    // if (isNova && window.speechSynthesis) {
+//   ...
+//   window.speechSynthesis.speak(utterance);
+// }
 
   const handleUserMessage = (text) => {
     console.log('Handling user message:', text); // Debug log
@@ -386,31 +357,7 @@ if (setupStage === 'askCodeword') {
             }}
           />
         </div>
-        <div
-          style={{
-            width: '300px',
-            background: '#f0f0f0',
-            padding: '10px',
-            borderLeft: '1px solid #ccc',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        >
-          <video
-            ref={videoRef}
-            src="/videos/NovaTalk1.mp4"
-            autoPlay
-            muted
-            loop
-            style={{
-              width: '150px',
-              height: '200px',
-              borderRadius: '12px',
-              opacity: 1, // Removed isSpeaking dependency
-              transition: 'opacity 0.3s ease-in-out',
-            }}
-          />
-        </div>
+       
       </div>
       {selectedImage && (
         <div
