@@ -153,12 +153,13 @@ const saveToMemory = (newEntry) => {
     const newMessage = { type: 'text', content: text, isUser: !isNova };
 
     setMessages((prev) => [...prev, newMessage]);
-
+ }; // <--- 🧠 You missed this bracket!
     // Speak all Nova messages
     // if (isNova && window.speechSynthesis) {
 //   ...
 //   window.speechSynthesis.speak(utterance);
 // }
+   
 
   const handleUserMessage = (text) => {
     console.log('Handling user message:', text); // Debug log
