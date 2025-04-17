@@ -40,10 +40,11 @@ function BeeOneAIChat() {
   const [memory, setMemory] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const videoRef = useRef(null);
-
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = SpeechRecognition ? new SpeechRecognition() : null;
-
+const [failedAttempts, setFailedAttempts] = useState(0);
+const [softVerifyStage, setSoftVerifyStage] = useState(0); // 0 = no fallback yet
+  
   if (recognition) {
     recognition.lang = 'en-US';
     recognition.continuous = true;
@@ -171,26 +172,57 @@ setTimeout(() => {
 const handleUserMessage = (text) => {
   if (!text.trim()) return;
 
-  console.log('🧠 Nova is handling message:', text);
-  console.log('🔍 Current setupStage:', setupStage);
+  if (setupStage === 'verify') {
+    const saved = JSON.parse(localStorage.getItem('novaIdentity'));
+    const answer = text.trim().toLowerCase();
 
-  // ✅ Auto-progress setup if using voice
- if (setupStage === 'verify') {
-  const saved = JSON.parse(localStorage.getItem('novaIdentity'));
+    if (saved && saved.codeWord.toLowerCase() === answer) {
+      setSetupStage('complete');
 
-  if (saved && saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
-    setSetupStage('complete');
+      setTimeout(() => {
+        handleUserMessage("Hey Nova, I'm back.");
+      }, 100);
 
-    setTimeout(() => {
-      handleUserMessage("Hey Nova, I'm back.");
-    }, 100); // 🔧 Delay ensures mic and speech aren’t fighting
+      return;
+    }
 
-  } else {
-    addMessage('Nova', 'Hmm... that’s not quite right. Try saying the codeword again. 💛');
+    // Soft verification stages (1–3)
+    if (softVerifyStage > 0) {
+      let correct = false;
+
+      if (softVerifyStage === 1 && saved?.motherName?.toLowerCase() === answer) correct = true;
+      if (softVerifyStage === 2 && saved?.petName?.toLowerCase() === answer) correct = true;
+      if (softVerifyStage === 3 && (answer.includes('love') || answer.includes('hobby') || answer.includes('sport'))) correct = true;
+
+      if (correct) {
+        setSetupStage('complete');
+        setSoftVerifyStage(0);
+        addMessage('Nova', `💡 That matches what I remember. Your codeword was "**${saved.codeWord}**". Let’s continue like nothing happened 💛`);
+      } else if (softVerifyStage < 3) {
+        const nextStage = softVerifyStage + 1;
+        setSoftVerifyStage(nextStage);
+
+        const prompts = [
+          "What’s your mother’s name?",
+          "What’s your pet’s name?",
+          "Tell me something you said you love.",
+        ];
+
+        addMessage('Nova', prompts[nextStage - 1]); // ask next
+      } else {
+        setSoftVerifyStage(0);
+        addMessage('Nova', "I'm still not sure... Let's try again later or reset together 💭");
+      }
+
+      return;
+    }
+
+    // First failure triggers fallback questions
+    setSoftVerifyStage(1);
+    addMessage('Nova', "That doesn't seem right, but I can try a few questions to help 💡");
+    addMessage('Nova', "What’s your mother’s name?");
+    return;
   }
-
-  return;
-}
 
 fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
   if (!replyText || typeof replyText !== 'string') {
