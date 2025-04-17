@@ -165,7 +165,7 @@ const addMessage = (sender, text) => {
     console.log('🗣️ Speaking with voice:', utterance.voice.name);
     window.speechSynthesis.speak(utterance);
   }, 100); // 🔧 Delay fixes voice trigger after mic
-}
+}; 
 
 const handleUserMessage = (text) => {
   if (!text.trim()) return;
