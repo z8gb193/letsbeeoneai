@@ -50,7 +50,7 @@ function BeeOneAIChat() {
     recognition.interimResults = false;
   }
 
- useEffect(() => {
+useEffect(() => {
   const synth = window.speechSynthesis;
 
   const loadVoices = () => {
@@ -69,31 +69,24 @@ function BeeOneAIChat() {
 
   loadVoices();
 
- const identity = JSON.parse(localStorage.getItem('novaIdentity'));
-const bypass = true; // ← change to false later if you want codeword check
+  // 💾 Load memory
+  const savedMemory = JSON.parse(localStorage.getItem('novaMemory'));
+  if (savedMemory && Array.isArray(savedMemory)) {
+    setMemory(savedMemory);
+  }
 
-if (identity && identity.codeWord && !bypass) {
-  setUserName(identity.firstName);
-  setSetupStage('verify');
-  addMessage('Nova', 'Hey! What’s the codeword you gave me last time?');
-} else {
-  if (identity && identity.firstName) {
+  // 🧠 Load identity + codeword setup
+  const identity = JSON.parse(localStorage.getItem('novaIdentity'));
+  if (identity && identity.codeWord) {
     setUserName(identity.firstName);
-    setSetupStage('complete');
-    addMessage('Nova', `Welcome back, ${identity.firstName}! 💛 I’m ready to talk.`);
+    setSetupStage('verify');
+    addMessage('Nova', 'Hey! What’s the codeword you gave me last time?');
   } else {
     setSetupStage('askName');
     addMessage('Nova', 'Hi! I’m Nova 💛 What’s your name?');
   }
-}
 
-const savedMemory = JSON.parse(localStorage.getItem('novaMemory'));
-if (savedMemory && Array.isArray(savedMemory)) {
-  setMemory(savedMemory);
-}
-
-   
-  // 🧠 Voice input triggers chat
+  // 🎤 Voice recognition setup
   if (recognition) {
     recognition.onresult = (event) => {
       const lastResult = event.results[event.results.length - 1];
@@ -101,14 +94,22 @@ if (savedMemory && Array.isArray(savedMemory)) {
         const transcript = lastResult[0].transcript.trim();
         console.log('🎤 Voice transcript:', transcript);
         if (transcript) {
-          addMessage('user', transcript);      // Show user's voice as a message
-          handleUserMessage(transcript);       // Trigger Nova’s response
+          addMessage('user', transcript);
+          handleUserMessage(transcript);
         }
       }
     };
 
-    recognition.onend = () => recognition.start();
-    recognition.onerror = (event) => console.error('Speech recognition error:', event.error);
+    recognition.onend = () => {
+      console.log('🎤 Mic restarted');
+      recognition.start();
+    };
+
+    recognition.onerror = (event) => {
+      console.error('🎤 Speech recognition error:', event.error);
+    };
+
+    console.log('🎤 Mic started');
     recognition.start();
   }
 
@@ -149,10 +150,24 @@ if (savedMemory && Array.isArray(savedMemory)) {
   };
 
   const handleUserMessage = (text) => {
-    if (!text.trim()) return;
-if (setupStage !== 'complete') {
-  console.log('⚠️ Forcing complete mode');
-  setSetupStage('complete');
+  if (!text.trim()) return;
+
+  // 👇 Add these logs at the top to debug live
+  console.log('🧠 Nova is handling message:', text);
+  console.log('🔍 Current setupStage:', setupStage);
+
+  // (Optional) TEMP override if needed
+  // if (setupStage !== 'complete') {
+  //   console.log('⚠️ Forcing complete mode');
+  //   setSetupStage('complete');
+  // }
+
+  if (setupStage === 'askName') {
+    setUserName(text.trim());
+    setSetupStage('askAge');
+    addMessage('Nova', 'Nice to meet you! How old are you?');
+    return;
+  }
 }
 
     if (setupStage === 'askName') {
