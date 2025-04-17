@@ -50,50 +50,59 @@ function BeeOneAIChat() {
     recognition.interimResults = false;
   }
 
-  useEffect(() => {
-    const synth = window.speechSynthesis;
-    const loadVoices = () => {
-      const voices = synth.getVoices();
-      setAvailableVoices(voices);
-      if (voices.length && !novaVoiceName) {
-        const firstVoice = voices[0].name;
-        setNovaVoiceName(firstVoice);
-        localStorage.setItem('novaVoice', firstVoice);
+ useEffect(() => {
+  const synth = window.speechSynthesis;
+
+  const loadVoices = () => {
+    const voices = synth.getVoices();
+    setAvailableVoices(voices);
+    if (voices.length && !novaVoiceName) {
+      const firstVoice = voices[0].name;
+      setNovaVoiceName(firstVoice);
+      localStorage.setItem('novaVoice', firstVoice);
+    }
+  };
+
+  if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = loadVoices;
+  }
+
+  loadVoices();
+
+  const identity = JSON.parse(localStorage.getItem('novaIdentity'));
+  if (identity && identity.codeWord) {
+    setUserName(identity.firstName);
+    setSetupStage('complete'); // 💥 force skip to chat mode
+    addMessage('Nova', `Welcome back, ${identity.firstName}! 💛 I’m ready to talk.`);
+  } else {
+    setSetupStage('askName');
+    addMessage('Nova', 'Hi! I’m Nova 💛 What’s your name?');
+  }
+
+  // 🧠 Voice input triggers chat
+  if (recognition) {
+    recognition.onresult = (event) => {
+      const lastResult = event.results[event.results.length - 1];
+      if (lastResult.isFinal) {
+        const transcript = lastResult[0].transcript.trim();
+        console.log('🎤 Voice transcript:', transcript);
+        if (transcript) {
+          addMessage('user', transcript);      // Show user's voice as a message
+          handleUserMessage(transcript);       // Trigger Nova’s response
+        }
       }
     };
-    if (synth.onvoiceschanged !== undefined) {
-      synth.onvoiceschanged = loadVoices;
-    }
-    loadVoices();
 
-    if (recognition) {
-      recognition.onresult = (event) => {
-        const lastResult = event.results[event.results.length - 1];
-        if (lastResult.isFinal) {
-          const transcript = lastResult[0].transcript.trim();
-          if (transcript) handleUserMessage(transcript);
-        }
-      };
-      recognition.onend = () => recognition.start();
-      recognition.onerror = (event) => console.error('Speech recognition error:', event.error);
-      recognition.start();
-    }
+    recognition.onend = () => recognition.start();
+    recognition.onerror = (event) => console.error('Speech recognition error:', event.error);
+    recognition.start();
+  }
 
-    const identity = JSON.parse(localStorage.getItem('novaIdentity'));
-    if (identity && identity.codeWord) {
-      setUserName(identity.firstName);
-      setSetupStage('verify');
-      addMessage('Nova', 'Hey! What’s the codeword you gave me last time?');
-    } else {
-      setSetupStage('askName');
-      addMessage('Nova', 'Hi! I’m Nova 💛 What’s your name?');
-    }
-
-    return () => {
-      if (recognition) recognition.stop();
-      synth.cancel();
-    };
-  }, []);
+  return () => {
+    if (recognition) recognition.stop();
+    synth.cancel();
+  };
+}, []);
 
   const addMessage = (sender, text) => {
     const isNova = sender.toLowerCase() === 'nova';
