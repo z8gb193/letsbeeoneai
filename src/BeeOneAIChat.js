@@ -80,11 +80,10 @@ useEffect(() => {
   const identity = JSON.parse(localStorage.getItem('novaIdentity'));
   if (identity && identity.codeWord) {
     setUserName(identity.firstName);
-    setSetupStage('verify');
-    addMessage('Nova', 'Hey! What’s the codeword you gave me last time?');
-  } else {
-    setSetupStage('askName');
-    addMessage('Nova', 'Hi! I’m Nova 💛 What’s your name?');
+   setSetupStage('verify');
+setTimeout(() => {
+  addMessage('Nova', 'Hey! What’s the codeword you gave me last time?');
+}, 100);
   }
 
   // 🎤 Voice recognition setup
@@ -194,36 +193,58 @@ const handleUserMessage = (text) => {
       if (softVerifyStage === 2 && saved?.petName?.toLowerCase() === answer) correct = true;
       if (softVerifyStage === 3 && (answer.includes('love') || answer.includes('hobby') || answer.includes('sport'))) correct = true;
 
-      if (correct) {
-        setSetupStage('complete');
-        setSoftVerifyStage(0);
-        addMessage('Nova', `💡 That matches what I remember. Your codeword was "**${saved.codeWord}**". Let’s continue like nothing happened 💛`);
-      } else if (softVerifyStage < 3) {
-        const nextStage = softVerifyStage + 1;
-        setSoftVerifyStage(nextStage);
 
-        const prompts = [
-          "What’s your mother’s name?",
-          "What’s your pet’s name?",
-          "Tell me something you said you love.",
-        ];
+      if (setupStage === 'verify') {
+  const saved = JSON.parse(localStorage.getItem('novaIdentity'));
+  const answer = text.trim().toLowerCase();
 
-        addMessage('Nova', prompts[nextStage - 1]); // ask next
-      } else {
-        setSoftVerifyStage(0);
-        addMessage('Nova', "I'm still not sure... Let's try again later or reset together 💭");
-      }
+  if (saved && saved.codeWord.toLowerCase() === answer) {
+    setSetupStage('complete');
 
-      return;
-    }
+    setTimeout(() => {
+      handleUserMessage("Hey Nova, I'm back.");
+    }, 100);
 
-    // First failure triggers fallback questions
-    setSoftVerifyStage(1);
-    addMessage('Nova', "That doesn't seem right, but I can try a few questions to help 💡");
-    addMessage('Nova', "What’s your mother’s name?");
     return;
   }
 
+  if (softVerifyStage > 0) {
+    let correct = false;
+
+    if (softVerifyStage === 1 && saved?.motherName?.toLowerCase() === answer) correct = true;
+    if (softVerifyStage === 2 && saved?.petName?.toLowerCase() === answer) correct = true;
+    if (softVerifyStage === 3 && (answer.includes('love') || answer.includes('hobby') || answer.includes('sport'))) correct = true;
+
+    if (correct) {
+      setSetupStage('complete');
+      setSoftVerifyStage(0);
+      addMessage('Nova', `✅ That sounds right. I trust you. Your codeword was "**${saved.codeWord}**". Welcome back 💛`);
+    } else if (softVerifyStage < 3) {
+      const nextStage = softVerifyStage + 1;
+      setSoftVerifyStage(nextStage);
+
+      const prompts = [
+        "What’s your mother’s name?",
+        "What’s your pet’s name?",
+        "Tell me something you said you love.",
+      ];
+
+      addMessage('Nova', prompts[nextStage - 1]); // ask next question
+    } else {
+      setSoftVerifyStage(0);
+      addMessage('Nova', "I'm still not sure... but that’s okay. Would you like to reset me and start fresh? Or try again later 💭");
+    }
+
+    return;
+  }
+
+  setSoftVerifyStage(1);
+  addMessage('Nova', "That doesn't seem right, but I can try a few questions to help 💡");
+  addMessage('Nova', "What’s your mother’s name?");
+  return;
+}
+
+// ✅ Normal message flow after verification
 fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
   if (!replyText || typeof replyText !== 'string') {
     console.warn('🛑 Nova backend gave no reply.');
@@ -232,6 +253,7 @@ fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText)
 
   console.log('💬 Nova replied:', replyText);
   addMessage('Nova', replyText);
+});
 
   // 🧠 Memory upgrade
   const keywords = replyText.match(/\b(like|love|want|enjoy|hate|afraid of|interested in|sport:|football|tennis|basketball|cricket|hobby|mother|father|pet|name|friend|lost|first kiss|accident|divorce|trauma)\b.*?\b(\w{3,})/gi);
