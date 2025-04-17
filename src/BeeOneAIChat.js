@@ -149,18 +149,11 @@ useEffect(() => {
     }
   };
 
-  const handleUserMessage = (text) => {
+ const handleUserMessage = (text) => {
   if (!text.trim()) return;
 
-  // 👇 Add these logs at the top to debug live
   console.log('🧠 Nova is handling message:', text);
   console.log('🔍 Current setupStage:', setupStage);
-
-  // (Optional) TEMP override if needed
-  // if (setupStage !== 'complete') {
-  //   console.log('⚠️ Forcing complete mode');
-  //   setSetupStage('complete');
-  // }
 
   if (setupStage === 'askName') {
     setUserName(text.trim());
@@ -168,67 +161,70 @@ useEffect(() => {
     addMessage('Nova', 'Nice to meet you! How old are you?');
     return;
   }
-}
 
-    if (setupStage === 'askName') {
-      setUserName(text.trim());
-      setSetupStage('askAge');
-      addMessage('Nova', 'Nice to meet you! How old are you?');
-      return;
-    }
-    if (setupStage === 'askAge') {
-      setSetupStage('askMother');
-      addMessage('Nova', 'What’s your mother’s first name?');
-      return;
-    }
-    if (setupStage === 'askMother') {
-      setSetupStage('askPet');
-      addMessage('Nova', 'What’s your pet’s name? (or say "none")');
-      return;
-    }
-    if (setupStage === 'askPet') {
-      setSetupStage('askCodeword');
-      addMessage('Nova', 'Now choose a codeword you’ll remember. This will be your key next time! 🧠 Write it down now.');
-      return;
-    }
-    if (setupStage === 'askCodeword') {
-      const identity = { firstName: userName, age: '?', motherName: '?', petName: '?', codeWord: text.trim() };
-      localStorage.setItem('novaIdentity', JSON.stringify(identity));
+  if (setupStage === 'askAge') {
+    setSetupStage('askMother');
+    addMessage('Nova', 'What’s your mother’s first name?');
+    return;
+  }
+
+  if (setupStage === 'askMother') {
+    setSetupStage('askPet');
+    addMessage('Nova', 'What’s your pet’s name? (or say "none")');
+    return;
+  }
+
+  if (setupStage === 'askPet') {
+    setSetupStage('askCodeword');
+    addMessage('Nova', 'Now choose a codeword you’ll remember. This will be your key next time! 🧠 Write it down now.');
+    return;
+  }
+
+  if (setupStage === 'askCodeword') {
+    const identity = {
+      firstName: userName,
+      age: '?',
+      motherName: '?',
+      petName: '?',
+      codeWord: text.trim(),
+    };
+    localStorage.setItem('novaIdentity', JSON.stringify(identity));
+    setSetupStage('complete');
+    addMessage('Nova', `Great! Your codeword is saved in my memory, ${userName}. Next time, I’ll ask for it before we start. 💾`);
+    return;
+  }
+
+  if (setupStage === 'verify') {
+    const saved = JSON.parse(localStorage.getItem('novaIdentity'));
+    if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
       setSetupStage('complete');
-      addMessage('Nova', `Great! Your codeword is saved in my memory, ${userName}. Next time, I’ll ask for it before we start. 💾`);
-      return;
+      addMessage('Nova', `Access granted 💛 Welcome back, ${saved.firstName}! Let's get going.`);
+    } else {
+      addMessage('Nova', 'Hmm... that’s not quite right. Try again? 💛');
     }
-    if (setupStage === 'verify') {
-      const saved = JSON.parse(localStorage.getItem('novaIdentity'));
-      if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
-        setSetupStage('complete');
-        addMessage('Nova', `Access granted 💛 Welcome back, ${saved.firstName}! Let's get going.`);
-      } else {
-        addMessage('Nova', 'Hmm... that’s not quite right. Until I get the correct codeword, things might be a bit... slow. 😶‍🌫️ Try again?');
-      }
-      return;
-    }
+    return;
+  }
 
+  // ✅ If setup is complete, send to backend
+  if (setupStage === 'complete') {
     fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
       addMessage('Nova', replyText);
 
-// Extract memory keywords (very basic version)
-const newMemory = [...memory];
-const keywords = replyText.match(/\\b(like|love|want|enjoy|hate|afraid of)\\b.*?\\b(\\w{3,})/gi);
-if (keywords) {
-  keywords.forEach(k => {
-    const cleaned = k.toLowerCase().trim();
-    if (!newMemory.includes(cleaned)) {
-      newMemory.push(cleaned);
-    }
-  });
-}
-setMemory(newMemory);
-localStorage.setItem('novaMemory', JSON.stringify(newMemory));
-      
+      const newMemory = [...memory];
+      const keywords = replyText.match(/\b(like|love|want|enjoy|hate|afraid of)\b.*?\b(\w{3,})/gi);
+      if (keywords) {
+        keywords.forEach(k => {
+          const cleaned = k.toLowerCase().trim();
+          if (!newMemory.includes(cleaned)) {
+            newMemory.push(cleaned);
+          }
+        });
+      }
+      setMemory(newMemory);
+      localStorage.setItem('novaMemory', JSON.stringify(newMemory));
     });
-  };
-
+  }
+};
   const fetchReplyFromBackend = async (character, message, memory, userName = 'Friend', userGender = 'unspecified') => {
     try {
       const response = await fetch('https://beeoneai-backend.onrender.com/chat', {
