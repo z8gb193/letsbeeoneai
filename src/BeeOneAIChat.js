@@ -276,7 +276,7 @@ const handleUserMessage = (text) => {
     setInput('');                      // ✅ Clear input field
   }
 };
-};
+
 
   return (
   <>
