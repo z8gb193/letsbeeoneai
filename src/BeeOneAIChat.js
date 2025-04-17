@@ -178,6 +178,12 @@ const handleUserMessage = (text) => {
   if (setupStage !== 'complete') {
     console.warn('⚠️ Forcing setupStage to complete (for voice input)');
     setSetupStage('complete');
+
+    setTimeout(() => {
+      handleUserMessage(text); // Re-trigger the message as if freshly sent in complete mode
+    }, 10);
+
+    return; // ✅ Important: this ends the original call cleanly
   }
 
   fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
