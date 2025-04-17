@@ -438,10 +438,9 @@ const handleUserMessage = (text) => {
           }}
         />
       </div>
-    )}
- </>
-); // ✅ closes the return
+  </>
+); // ✅ closes return JSX block
 
-
+}; // ✅ closes function BeeOneAIChat
 
 export default BeeOneAIChat;
