@@ -142,7 +142,7 @@ if (savedMemory && Array.isArray(savedMemory)) {
 
   const handleUserMessage = (text) => {
     if (!text.trim()) return;
-    addMessage('user', text);
+
 
     if (setupStage === 'askName') {
       setUserName(text.trim());
