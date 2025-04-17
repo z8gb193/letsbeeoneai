@@ -192,29 +192,39 @@ const handleUserMessage = (text) => {
   return;
 }
 
-  fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
-    if (!replyText || typeof replyText !== 'string') {
-      console.warn('🛑 Nova backend gave no reply.');
-      return;
-    }
+fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
+  if (!replyText || typeof replyText !== 'string') {
+    console.warn('🛑 Nova backend gave no reply.');
+    return;
+  }
 
-    console.log('💬 Nova replied:', replyText);
-    addMessage('Nova', replyText);
+  console.log('💬 Nova replied:', replyText);
+  addMessage('Nova', replyText);
 
-    const newMemory = [...memory];
-    const keywords = replyText.match(/\b(like|love|want|enjoy|hate|afraid of)\b.*?\b(\w{3,})/gi);
-    if (keywords) {
-      keywords.forEach(k => {
-        const cleaned = k.toLowerCase().trim();
-        if (!newMemory.includes(cleaned)) {
-          newMemory.push(cleaned);
-        }
-      });
-    }
-    setMemory(newMemory);
-    localStorage.setItem('novaMemory', JSON.stringify(newMemory));
-  });
-};
+  // 🧠 Memory upgrade
+  const keywords = replyText.match(/\b(like|love|want|enjoy|hate|afraid of|interested in|sport:|football|tennis|basketball|cricket|hobby|mother|father|pet|name|friend|lost|first kiss|accident|divorce|trauma)\b.*?\b(\w{3,})/gi);
+  const incomingMemory = keywords ? keywords.map(k => k.toLowerCase().trim()) : [];
+  const allMemory = Array.from(new Set([...memory, ...incomingMemory]));
+
+  const MAX_MEMORY = 100;
+  const essentials = [
+    'name', 'mother', 'father', 'friend', 'pet',
+    'lost', 'love', 'first kiss', 'accident', 'divorce', 'trauma',
+    'interested in', 'hobby', 'football', 'tennis', 'basketball', 'sport'
+  ];
+
+  const essentialOnly = allMemory.filter(item =>
+    essentials.some(keyword => item.includes(keyword))
+  );
+  const nonEssential = allMemory.filter(item =>
+    !essentials.some(keyword => item.includes(keyword))
+  );
+
+  const trimmedMemory = [...essentialOnly, ...nonEssential.slice(0, MAX_MEMORY - essentialOnly.length)];
+
+  setMemory(trimmedMemory);
+  localStorage.setItem('novaMemory', JSON.stringify(trimmedMemory));
+});
 
   const fetchReplyFromBackend = async (character, message, memory, userName = 'Friend', userGender = 'unspecified') => {
     try {
