@@ -11,7 +11,13 @@ const novaImages = [
 
 function ChatMessage({ message }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '20px' }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'flex-start',
+        marginBottom: '20px',
+      }}
+    >
       <div
         style={{
           backgroundColor: message.isUser ? '#e0f7fa' : '#f1f1f1',
@@ -40,10 +46,9 @@ function BeeOneAIChat() {
   const [memory, setMemory] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const videoRef = useRef(null);
-  const SpeechRecognition = typeof window !== 'undefined' ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = SpeechRecognition ? new SpeechRecognition() : null;
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [softVerifyStage, setSoftVerifyStage] = useState(0);
 
   if (recognition) {
     recognition.lang = 'en-US';
@@ -52,63 +57,61 @@ function BeeOneAIChat() {
   }
 
   useEffect(() => {
+    // Load voices
     const synth = window.speechSynthesis;
-
     const loadVoices = () => {
       const voices = synth.getVoices();
       setAvailableVoices(voices);
+      console.log('Loaded voices:', voices.map(v => v.name)); // Debug log
+      // Set first voice as default if none selected
       if (voices.length && !novaVoiceName) {
         const firstVoice = voices[0].name;
         setNovaVoiceName(firstVoice);
         localStorage.setItem('novaVoice', firstVoice);
+        console.log('Set default voice:', firstVoice); // Debug log
       }
     };
-
     if (synth.onvoiceschanged !== undefined) {
       synth.onvoiceschanged = loadVoices;
     }
-
     loadVoices();
-
-    const savedMemory = JSON.parse(localStorage.getItem('novaMemory'));
-    if (savedMemory && Array.isArray(savedMemory)) {
-      setMemory(savedMemory);
-    }
-
-    const identity = JSON.parse(localStorage.getItem('novaIdentity'));
-    if (identity && identity.codeWord) {
-      setUserName(identity.firstName);
-      setSetupStage('verify');
-      setTimeout(() => {
-        addMessage('Nova', 'Hey! What’s the codeword you gave me last time?');
-      }, 100);
-    }
 
     if (recognition) {
       recognition.onresult = (event) => {
         const lastResult = event.results[event.results.length - 1];
         if (lastResult.isFinal) {
           const transcript = lastResult[0].transcript.trim();
+          console.log('Speech transcript:', transcript); // Debug log
           if (transcript) {
-            addMessage('user', transcript);
             handleUserMessage(transcript);
           }
         }
       };
 
       recognition.onend = () => {
-        if (!window.speechSynthesis.speaking) {
-          recognition.start();
-        }
+        console.log('Recognition restarting'); // Debug log
+        recognition.start();
       };
 
       recognition.onerror = (event) => {
-        console.error('🎤 Speech recognition error:', event.error);
+        console.error('Speech recognition error:', event.error); // Debug log
       };
 
       recognition.start();
     }
 
+    // Initial setup
+    const identity = JSON.parse(localStorage.getItem('novaIdentity'));
+    if (identity && identity.codeWord) {
+      setUserName(identity.firstName);
+      setSetupStage('verify');
+      addMessage('Nova', 'Hey! What’s the codeword you gave me last time?');
+    } else {
+      setSetupStage('askName');
+      addMessage('Nova', 'Hi! I’m Nova 💛 What’s your name?');
+    }
+
+    // Cleanup
     return () => {
       if (recognition) recognition.stop();
       synth.cancel();
@@ -116,99 +119,105 @@ function BeeOneAIChat() {
   }, []);
 
   const addMessage = (sender, text) => {
-    const isNova = sender.toLowerCase().includes('nova');
+    console.log('Adding message:', { sender, text }); // Debug log
+    const isNova = sender.toLowerCase() === 'nova';
     const newMessage = { type: 'text', content: text, isUser: !isNova };
+
     setMessages((prev) => [...prev, newMessage]);
 
+    // Speak all Nova messages
     if (isNova && window.speechSynthesis) {
+      console.log('Attempting to speak:', text); // Debug log
       const selectedVoice = availableVoices.find(v => v.name === novaVoiceName) || availableVoices[0];
-      if (!selectedVoice) return;
+      if (!selectedVoice) {
+        console.log('No voice available'); // Debug log
+        return;
+      }
+
+      // Stop recognition to prevent feedback
       if (recognition) recognition.stop();
+
+      // Cancel any ongoing speech
       window.speechSynthesis.cancel();
 
-      const cleanedText = text.replace(/[\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF]/g, '');
+      const cleanedText = text.replace(/([\u231A-\u231B]|[\u23E9-\u23FA]|[\u24C2]|[\u25AA-\u27BF]|[\uD83C-\uDBFF\uDC00-\uDFFF])/g, '');
       const utterance = new SpeechSynthesisUtterance(cleanedText);
       utterance.voice = selectedVoice;
       utterance.lang = 'en-US';
-      utterance.rate = 1.2;
-      utterance.pitch = 1.1;
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
 
       utterance.onend = () => {
+        console.log('Finished speaking:', text); // Debug log
+        if (recognition) recognition.start();
+      };
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event); // Debug log
         if (recognition) recognition.start();
       };
 
-      setTimeout(() => {
-        window.speechSynthesis.speak(utterance);
-      }, 100);
+      window.speechSynthesis.speak(utterance);
     }
   };
 
   const handleUserMessage = (text) => {
+    console.log('Handling user message:', text); // Debug log
     if (!text.trim()) return;
+    addMessage('user', text);
 
-    const saved = JSON.parse(localStorage.getItem('novaIdentity'));
-    const answer = text.trim().toLowerCase();
+    if (setupStage === 'askName') {
+      setUserName(text.trim());
+      setSetupStage('askAge');
+      addMessage('Nova', 'Nice to meet you! How old are you?');
+      return;
+    }
+
+    if (setupStage === 'askAge') {
+      setSetupStage('askMother');
+      addMessage('Nova', 'What’s your mother’s first name?');
+      return;
+    }
+
+    if (setupStage === 'askMother') {
+      setSetupStage('askPet');
+      addMessage('Nova', 'What’s your pet’s name? (or say "none")');
+      return;
+    }
+
+    if (setupStage === 'askPet') {
+      setSetupStage('askCodeword');
+      addMessage('Nova', 'Now choose a codeword you’ll remember. This will be your key next time! 🧠 Write it down now.');
+      return;
+    }
+
+    if (setupStage === 'askCodeword') {
+      const identity = {
+        firstName: userName,
+        age: '?',
+        motherName: '?',
+        petName: '?',
+        codeWord: text.trim(),
+      };
+      localStorage.setItem('novaIdentity', JSON.stringify(identity));
+      setSetupStage('complete');
+      addMessage('Nova', `Great! Your codeword is saved in my memory, ${userName}. Next time, I’ll ask for it before we start. 💾`);
+      return;
+    }
 
     if (setupStage === 'verify') {
-      if (saved && saved.codeWord.toLowerCase() === answer) {
+      const saved = JSON.parse(localStorage.getItem('novaIdentity'));
+      if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
         setSetupStage('complete');
-        setSoftVerifyStage(0);
-        setTimeout(() => {
-          handleUserMessage("Hey Nova, I'm back.");
-        }, 100);
-        return;
+        addMessage('Nova', `Access granted 💛 Welcome back, ${saved.firstName}! Let's get going.`);
+      } else {
+        addMessage('Nova', 'Hmm... that’s not quite right. Until I get the correct codeword, things might be a bit... slow. 😶‍🌫️ Try again?');
       }
-
-      if (softVerifyStage > 0) {
-        let correct = false;
-        if (softVerifyStage === 1 && saved?.motherName?.toLowerCase() === answer) correct = true;
-        if (softVerifyStage === 2 && saved?.petName?.toLowerCase() === answer) correct = true;
-        if (softVerifyStage === 3 && (answer.includes('love') || answer.includes('hobby') || answer.includes('sport'))) correct = true;
-
-        if (correct) {
-          setSetupStage('complete');
-          setSoftVerifyStage(0);
-          addMessage('Nova', `✅ That sounds right. I trust you. Your codeword was "**${saved.codeWord}**". Welcome back 💛`);
-        } else if (softVerifyStage < 3) {
-          const nextStage = softVerifyStage + 1;
-          setSoftVerifyStage(nextStage);
-          const prompts = [
-            "What’s your mother’s name?",
-            "What’s your pet’s name?",
-            "Tell me something you said you love.",
-          ];
-          addMessage('Nova', prompts[nextStage - 1]);
-        } else {
-          setSoftVerifyStage(0);
-          addMessage('Nova', "I'm still not sure... but that’s okay. Would you like to reset me and start fresh? Or try again later 💭");
-        }
-
-        return;
-      }
-
-      setSoftVerifyStage(1);
-      addMessage('Nova', "That doesn't seem right, but I can try a few questions to help 💡");
-      addMessage('Nova', "What’s your mother’s name?");
       return;
     }
 
     fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText) => {
-      if (!replyText || typeof replyText !== 'string') return;
+      console.log('Backend reply:', replyText); // Debug log
       addMessage('Nova', replyText);
-
-      const keywords = replyText.match(/\b(like|love|want|enjoy|hate|afraid of|interested in|sport:|football|tennis|basketball|cricket|hobby|mother|father|pet|name|friend|lost|first kiss|accident|divorce|trauma)\b.*?\b(\w{3,})/gi);
-      const incomingMemory = keywords ? keywords.map(k => k.toLowerCase().trim()) : [];
-      const allMemory = Array.from(new Set([...memory, ...incomingMemory]));
-
-      const MAX_MEMORY = 100;
-      const essentials = ['name', 'mother', 'father', 'friend', 'pet', 'lost', 'love', 'first kiss', 'accident', 'divorce', 'trauma', 'interested in', 'hobby', 'football', 'tennis', 'basketball', 'sport'];
-
-      const essentialOnly = allMemory.filter(item => essentials.some(keyword => item.includes(keyword)));
-      const nonEssential = allMemory.filter(item => !essentials.some(keyword => item.includes(keyword)));
-
-      const trimmedMemory = [...essentialOnly, ...nonEssential.slice(0, MAX_MEMORY - essentialOnly.length)];
-      setMemory(trimmedMemory);
-      localStorage.setItem('novaMemory', JSON.stringify(trimmedMemory));
     });
   };
 
@@ -217,7 +226,7 @@ function BeeOneAIChat() {
       const response = await fetch('https://beeoneai-backend.onrender.com/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ character, message, memory, name: userName, userId: 'default', gender: userGender })
+        body: JSON.stringify({ character, message, memory, name: userName, userId: 'default', gender: userGender }),
       });
       const data = await response.json();
       return data.reply || 'Hmm... I didn’t quite get that.';
@@ -229,7 +238,6 @@ function BeeOneAIChat() {
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      addMessage('user', input);
       handleUserMessage(input);
       setInput('');
     }
@@ -237,56 +245,160 @@ function BeeOneAIChat() {
 
   return (
     <>
-      {/* Top voice selector */}
-      <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, background: '#fff', padding: '12px 20px', border: '1px solid #ccc', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '10px', fontFamily: 'Arial, sans-serif' }}>
+      <div
+        style={{
+          position: 'fixed',
+          top: 20,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+          background: '#ffffff',
+          padding: '12px 20px',
+          border: '1px solid #ccc',
+          borderRadius: '12px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          fontFamily: 'Arial, sans-serif',
+        }}
+      >
         <label style={{ fontWeight: 'bold' }}>Voice:</label>
-        <select value={novaVoiceName} onChange={(e) => { setNovaVoiceName(e.target.value); localStorage.setItem('novaVoice', e.target.value); }} style={{ padding: '8px 12px', fontSize: '14px' }}>
+        <select
+          value={novaVoiceName}
+          onChange={(e) => {
+            setNovaVoiceName(e.target.value);
+            localStorage.setItem('novaVoice', e.target.value);
+            console.log('Voice changed to:', e.target.value); // Debug log
+          }}
+          style={{ padding: '8px 12px', fontSize: '14px' }}
+        >
           <option value="">-- Select Nova's Voice --</option>
           {availableVoices.map((v, i) => (
-            <option key={i} value={v.name}>{v.name} ({v.lang})</option>
+            <option key={i} value={v.name}>
+              {v.name} ({v.lang})
+            </option>
           ))}
         </select>
-        <button onClick={() => {
-          const v = availableVoices.find((v) => v.name === novaVoiceName) || availableVoices[0];
-          if (v) {
-            const u = new SpeechSynthesisUtterance('Hi! I’m Nova. This is how I sound.');
-            u.voice = v;
-            window.speechSynthesis.speak(u);
-          }
-        }} style={{ padding: '8px 12px', fontSize: '14px', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+        <button
+          onClick={() => {
+            const v = availableVoices.find((v) => v.name === novaVoiceName) || availableVoices[0];
+            if (v) {
+              const u = new SpeechSynthesisUtterance('Hi! I’m Nova. This is how I sound.');
+              u.voice = v;
+              window.speechSynthesis.speak(u);
+              console.log('Preview voice:', v.name); // Debug log
+            }
+          }}
+          style={{
+            padding: '8px 12px',
+            fontSize: '14px',
+            backgroundColor: '#007bff',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+          }}
+        >
           Preview
         </button>
       </div>
 
-      {/* Layout */}
       <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
-        {/* Left Panel */}
-        <div style={{ width: '200px', overflowY: 'auto', background: '#f9f9f9', padding: '10px', borderRight: '1px solid #ccc' }}>
+        <div
+          style={{
+            width: '200px',
+            overflowY: 'auto',
+            background: '#f9f9f9',
+            padding: '10px',
+            borderRight: '1px solid #ccc',
+          }}
+        >
           {novaImages.map((img, idx) => (
-            <img key={idx} src={img} alt={`Nova ${idx}`} style={{ width: '100%', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer' }} onClick={() => setSelectedImage(img)} />
+            <img
+              key={idx}
+              src={img}
+              alt={`Nova ${idx}`}
+              style={{ width: '100%', borderRadius: '12px', marginBottom: '10px', cursor: 'pointer' }}
+              onClick={() => setSelectedImage(img)}
+            />
           ))}
         </div>
-
-        {/* Chat */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
             {messages.map((msg, index) => (
               <ChatMessage key={index} message={msg} />
             ))}
           </div>
-          <input value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Type your message..." style={{ width: '90%', height: '120px', padding: '20px', fontSize: '18px', border: '1px solid #ccc', borderRadius: '8px', margin: '20px auto', display: 'block' }} />
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Type your message..."
+            style={{
+              width: '90%',
+              height: '120px',
+              padding: '20px',
+              fontSize: '18px',
+              border: '1px solid #ccc',
+              borderRadius: '8px',
+              margin: '20px auto',
+              display: 'block',
+            }}
+          />
         </div>
-
-        {/* Right Panel */}
-        <div style={{ width: '300px', background: '#f0f0f0', padding: '10px', borderLeft: '1px solid #ccc', display: 'flex', justifyContent: 'center' }}>
-          <video ref={videoRef} src="/videos/NovaTalk1.mp4" autoPlay muted loop style={{ width: '150px', height: '200px', borderRadius: '12px', opacity: 1, transition: 'opacity 0.3s ease-in-out' }} />
+        <div
+          style={{
+            width: '300px',
+            background: '#f0f0f0',
+            padding: '10px',
+            borderLeft: '1px solid #ccc',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <video
+            ref={videoRef}
+            src="/videos/NovaTalk1.mp4"
+            autoPlay
+            muted
+            loop
+            style={{
+              width: '150px',
+              height: '200px',
+              borderRadius: '12px',
+              opacity: 1, // Removed isSpeaking dependency
+              transition: 'opacity 0.3s ease-in-out',
+            }}
+          />
         </div>
       </div>
-
-      {/* Image Modal */}
       {selectedImage && (
-        <div onClick={() => setSelectedImage(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <img src={selectedImage} alt="Expanded Nova" style={{ width: '500px', maxWidth: '90%', maxHeight: '90%', borderRadius: '12px' }} />
+        <div
+          onClick={() => setSelectedImage(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <img
+            src={selectedImage}
+            alt="Expanded Nova"
+            style={{
+              width: '500px',
+              maxWidth: '90%',
+              maxHeight: '90%',
+              borderRadius: '12px',
+            }}
+          />
         </div>
       )}
     </>
@@ -294,4 +406,3 @@ function BeeOneAIChat() {
 }
 
 export default BeeOneAIChat;
-
