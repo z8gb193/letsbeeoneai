@@ -225,7 +225,7 @@ fetchReplyFromBackend('nova', text, memory, userName, 'female').then((replyText)
   setMemory(trimmedMemory);
   localStorage.setItem('novaMemory', JSON.stringify(trimmedMemory));
 });
-
+}; // ✅ CLOSES handleUserMessage
   const fetchReplyFromBackend = async (character, message, memory, userName = 'Friend', userGender = 'unspecified') => {
     try {
       const response = await fetch('https://beeoneai-backend.onrender.com/chat', {
