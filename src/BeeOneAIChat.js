@@ -125,7 +125,7 @@ useEffect(() => {
 
 
   const addMessage = (sender, text) => {
-    const isNova = sender.toLowerCase() === 'nova';
+   const isNova = sender.toLowerCase().includes('nova');
     const newMessage = { type: 'text', content: text, isUser: !isNova };
     setMessages((prev) => [...prev, newMessage]);
 
@@ -199,14 +199,12 @@ useEffect(() => {
     return;
   }
 
-  if (setupStage === 'verify') {
-    const saved = JSON.parse(localStorage.getItem('novaIdentity'));
-    if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
-      setSetupStage('complete');
-      addMessage('Nova', `Access granted 💛 Welcome back, ${saved.firstName}! Let's get going.`);
-    } else {
-      addMessage('Nova', 'Hmm... that’s not quite right. Try again? 💛');
-    }
+if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
+  setSetupStage('complete');
+  addMessage('Nova', `Access granted 💛 Welcome back, ${saved.firstName}! I'm ready to chat with you.`);
+} else {
+  addMessage('Nova', 'Hmm... that’s not quite right. Try saying the codeword again. 💛');
+}
     return;
   }
 
