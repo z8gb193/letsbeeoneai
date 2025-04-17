@@ -154,7 +154,7 @@ useEffect(() => {
     }
   };
 
- const handleUserMessage = (text) => {
+const handleUserMessage = (text) => {
   if (!text.trim()) return;
 
   console.log('🧠 Nova is handling message:', text);
@@ -199,12 +199,14 @@ useEffect(() => {
     return;
   }
 
-if (saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
-  setSetupStage('complete');
-  addMessage('Nova', `Access granted 💛 Welcome back, ${saved.firstName}! I'm ready to chat with you.`);
-} else {
-  addMessage('Nova', 'Hmm... that’s not quite right. Try saying the codeword again. 💛');
-}
+  if (setupStage === 'verify') {
+    const saved = JSON.parse(localStorage.getItem('novaIdentity'));
+    if (saved && saved.codeWord.toLowerCase() === text.trim().toLowerCase()) {
+      setSetupStage('complete');
+      addMessage('Nova', `Access granted 💛 Welcome back, ${saved.firstName}! I'm ready to chat with you.`);
+    } else {
+      addMessage('Nova', 'Hmm... that’s not quite right. Try saying the codeword again. 💛');
+    }
     return;
   }
 
